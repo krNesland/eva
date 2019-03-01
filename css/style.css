@@ -1,0 +1,9 @@
+#map { 
+    height: 400px;
+    width: 800px; 
+}
+
+#camera {
+    width: 640px;
+    height: 480px;
+}
