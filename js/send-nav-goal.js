@@ -17,7 +17,7 @@ function publishGoal(latlng) {
         goal: {
             target_pose: {
                 header: {
-                    frame_id: "map"
+                    frame_id: "odom"
                 },
                 pose: {
                     position: {
@@ -41,39 +41,35 @@ function publishGoal(latlng) {
     navTopic.publish(navMsg);
 }
 
-/*
+// Pre-defined position.
+function publishSetGoal() {
+    console.log("Moving to pre-defined position.");
 
-// Subscribing to a Topic
-// ----------------------
+    // Then we create the payload to be published. The object we pas in to ros.
+    var navMsg = new ROSLIB.Message({
+        goal: {
+            target_pose: {
+                header: {
+                    frame_id: "odom"
+                },
+                pose: {
+                    position: {
+                        // Have to do some trickery with the axis.
+                        x: 1.0,
+                        y: -1.0,
+                        z: 0.0
+                    },
+                    orientation: {
+                        x: 0.0,
+                        y: 0.0,
+                        z: 0.0,
+                        w: 1.0
+                    }
+                }
+            }
+        }
+    });
 
-var listener = new ROSLIB.Topic({
-    ros : ros,
-    name : '/camera/rgb/image_raw',
-    messageType : 'sensor_msgs/Image'
-});
-
-const canvas = document.getElementById('camera');
-const ctx = canvas.getContext('2d');
-const arr = new Uint8ClampedArray(4*640*480);
-
-listener.subscribe(function(message) {
-    for (var i = 0; i < arr.length; i+=4) {
-        arr[i + 0] = 2*message.data.charCodeAt(i + 0);
-        arr[i + 1] = 2*message.data.charCodeAt(i + 1);
-        arr[i + 2] = 2*message.data.charCodeAt(i + 2);
-        arr[i + 3] = 255;
-    }
-
-    console.log(i);
-
-    var imageData = new ImageData(arr, 640, 480);
-    ctx.putImageData(imageData, 0, 0);
-
-    console.log(message.data.length);
-    console.log(message.data);
-
-    console.log(message.encoding);
-
-    listener.unsubscribe();
-});
-*/
+    // And finally, publish.
+    navTopic.publish(navMsg);
+}
