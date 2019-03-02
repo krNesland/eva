@@ -8,6 +8,7 @@ var navTopic = new ROSLIB.Topic({
     messageType : 'move_base_msgs/MoveBaseActionGoal'
 });
 
+// At click of map.
 function publishGoal(latlng) {
     console.log("x: " + latlng.lng);
     console.log("y: " + latlng.lat);
@@ -41,7 +42,7 @@ function publishGoal(latlng) {
     navTopic.publish(navMsg);
 }
 
-// Pre-defined position.
+// Pre-defined position (at click of button).
 function publishSetGoal() {
     console.log("Moving to pre-defined position.");
 
