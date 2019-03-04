@@ -1,6 +1,6 @@
 # This service sends in a list of waypoints. The robot should follow these in order and report back if the route was successfully followed.
 
-float64[] xVec
-float64[] yVec
+float64[] latVec
+float64[] lngVec
 ---
 uint8 success

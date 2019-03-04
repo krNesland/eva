@@ -16,8 +16,6 @@ var image = L.imageOverlay('img/bitmap.png', bounds).addTo(map);
 
 map.fitBounds(bounds);
 
-var marker = L.marker([1.5, 1.5]).addTo(map);
-
 // For calibration.
 // var marker1 = L.marker([0.0, 0.0]).addTo(map);
 // var marker2 = L.marker([2.07, 5.05]).addTo(map);

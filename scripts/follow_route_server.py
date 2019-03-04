@@ -13,19 +13,20 @@ def handle_follow_route(req):
 
     print("New route acquired.")
 
-    if len(req.xVec) < 1:
+    if len(req.latVec) < 1:
         print("A route must have at least one waypoint.")
         return FollowRouteResponse(0)
     
-    if not len(req.xVec) == len(req.yVec):
+    if not len(req.latVec) == len(req.lngVec):
         print("xVec and yVec must have equal length.")
         return FollowRouteResponse(0)
 
     finished = False
     waypoints = []
+    dist = 1.0 # Initialization.
 
-    for i in range(len(req.xVec)):
-        waypoints.append((req.xVec[i], req.yVec[i]))
+    for i in range(len(req.latVec)):
+        waypoints.append((req.latVec[i], -req.lngVec[i]))
 
     listener = tf.TransformListener()
     pub = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
@@ -41,12 +42,12 @@ def handle_follow_route(req):
     rate = rospy.Rate(10.0)
     while (not rospy.is_shutdown()) and (not finished):
         try:
-            (trans,rot) = listener.lookupTransform('/base_footprint', '/map', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+            nowPos = (trans[0], trans[1])
+            dist = math.sqrt((nowPos[0] - nowGoal[0])**2 + (nowPos[1] - nowGoal[1])**2)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
-        nowPos = (-trans[0], -trans[1])
-        dist = math.sqrt((nowPos[0] - nowGoal[0])**2 + (nowPos[1] - nowGoal[1])**2)
 
         if dist < 0.2:
             if not len(waypoints) < 1:
