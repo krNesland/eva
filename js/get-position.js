@@ -8,5 +8,5 @@ var tfClient = new ROSLIB.TFClient({
 console.log('Waiting for transforms.');
 
 tfClient.subscribe('base_footprint', function(tf) {
-    marker.setLatLng(L.latLng(tf.translation.x, -tf.translation.y)); 
+    marker.setLatLng(L.latLng(tf.translation.x, -tf.translation.y));
 });
