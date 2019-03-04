@@ -1,6 +1,6 @@
 var tfClient = new ROSLIB.TFClient({
     ros : ros,
-    fixedFrame : 'odom',
+    fixedFrame : 'map',
     angularThres : 0.01,
     transThres : 0.01
 });

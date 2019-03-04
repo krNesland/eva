@@ -32,15 +32,16 @@ def handle_follow_route(req):
 
     nowGoal = waypoints.pop(0)
     nowMsg = MoveBaseActionGoal()
-    nowMsg.goal.target_pose.header.frame_id = "odom"
+    nowMsg.goal.target_pose.header.frame_id = "map"
     nowMsg.goal.target_pose.pose.position.x = nowGoal[0]
     nowMsg.goal.target_pose.pose.position.y = nowGoal[1]
     nowMsg.goal.target_pose.pose.orientation.w = 1.0
+    pub.publish(nowMsg)
 
     rate = rospy.Rate(10.0)
     while (not rospy.is_shutdown()) and (not finished):
         try:
-            (trans,rot) = listener.lookupTransform('/base_footprint', '/odom', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/base_footprint', '/map', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
@@ -52,12 +53,12 @@ def handle_follow_route(req):
                 nowGoal = waypoints.pop(0)
                 nowMsg.goal.target_pose.pose.position.x = nowGoal[0]
                 nowMsg.goal.target_pose.pose.position.y = nowGoal[1]
+                pub.publish(nowMsg)
                 print("Heading for next waypoint.")
             else:
                 finished = True
                 print("Finished.")
 
-        pub.publish(nowMsg) # Maybe unecessary to have here?
         rate.sleep()
 
 
