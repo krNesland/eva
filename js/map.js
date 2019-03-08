@@ -8,17 +8,17 @@ var map = L.map('map', {
 var meterPerPixel = 0.00668;
 
 // Setting corner1 and corner2 empirically.
-var corner1 = L.latLng(2.6, -0.39);
-var corner2 = L.latLng(-0.35, 5.6);
+var corner1 = L.latLng(6.0, 0.0);
+var corner2 = L.latLng(0.0, 5.0);
 var bounds = L.latLngBounds(corner1, corner2);
 
-var image = L.imageOverlay('img/bitmap.png', bounds).addTo(map);
+var image = L.imageOverlay('img/map.png', bounds).addTo(map);
 
 map.fitBounds(bounds);
 
 // For calibration.
-// var marker1 = L.marker([0.0, 0.0]).addTo(map);
-// var marker2 = L.marker([2.07, 5.05]).addTo(map);
+// var marker1 = L.marker([5.0, 1.5]).addTo(map);
+// var marker2 = L.marker([1.0, 3.5]).addTo(map);
 
 var popup = L.popup();
 
