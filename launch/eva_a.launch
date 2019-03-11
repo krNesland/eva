@@ -9,5 +9,6 @@
     <node pkg="web_video_server" name="web_video_server" type="web_video_server"/>
     <node pkg="tf2_web_republisher" name="tf2_web_republisher" type="tf2_web_republisher"/>
     <node pkg="eva_a" name="route_server" type="follow_route_server.py"/>
+    <node pkg="eva_a" name="gas_level" type="gas_level_publisher.py"/>
 
 </launch>

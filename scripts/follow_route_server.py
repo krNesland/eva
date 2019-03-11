@@ -8,6 +8,7 @@ from move_base_msgs.msg import MoveBaseActionGoal
 import math
 
 # Could maybe benefit from being implemented as an action and not a server. Actions can report back during execution, not only at the end.
+# Does not currently return an error if the route is cancelled.
 
 def handle_follow_route(req):
 

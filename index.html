@@ -47,6 +47,20 @@
         <p id="closed" style="display:none">
             Connection closed.
         </p>
+        <i class="large material-icons" id ="connection-symbol">wifi</i>
+    </div>
+
+    <div class="card" id = "gas-dial-container">
+        <div class="card-image waves-effect waves-block waves-light">
+            <center><h1 class="activator" id = "gas-dial">55</h1></center>
+        </div>
+        <div class="card-content">
+            <span class="card-title activator grey-text text-darken-4">Gas Level<i class="material-icons right">more_vert</i></span>
+        </div>
+        <div class="card-reveal">
+            <span class="card-title grey-text text-darken-4">Gas Level<i class="material-icons right">close</i></span>
+            <p>Here is some more information about this product that is only revealed once clicked on.</p>
+        </div>
     </div>
 
     <img src="http://localhost:8080/stream?topic=/camera/rgb/image_raw">
@@ -64,6 +78,7 @@
     <script type="text/javascript" src="js/get-position.js"></script>
     <script type="text/javascript" src="js/send-route.js"></script>
     <script type="text/javascript" src="js/initial-pose.js"></script>
+    <script type="text/javascript" src="js/gas-level.js"></script>
 
   </body>
 </html>
