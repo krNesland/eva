@@ -26,7 +26,16 @@ def handle_follow_route(req):
     dist = 1.0 # Initialization.
 
     for i in range(len(req.latVec)):
-        waypoints.append((req.latVec[i], -req.lngVec[i]))
+        x = req.latVec[i]
+        y = -req.lngVec[i]
+        angle = 0.0
+
+        if i < (len(req.latVec) - 1):
+            dx = req.latVec[i + 1] - x
+            dy = -req.lngVec[i + 1] - y
+            angle = math.atan2(dy, dx)
+
+        waypoints.append((x, y, angle))
 
     listener = tf.TransformListener()
     pub = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
@@ -49,11 +58,12 @@ def handle_follow_route(req):
             continue
 
 
-        if dist < 0.2:
+        if dist < 0.1:
             if not len(waypoints) < 1:
                 nowGoal = waypoints.pop(0)
                 nowMsg.goal.target_pose.pose.position.x = nowGoal[0]
                 nowMsg.goal.target_pose.pose.position.y = nowGoal[1]
+                nowMsg.goal.target_pose.pose.orientation.z = nowGoal[2]
                 pub.publish(nowMsg)
                 print("Heading for next waypoint.")
             else:
