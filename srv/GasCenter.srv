@@ -1,0 +1,4 @@
+# This service tries to navigate towards the center of the gas.
+
+---
+uint8 success
