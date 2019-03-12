@@ -43,7 +43,6 @@ def talker():
 
 if __name__ == '__main__':
     try:
-        print("Gas level publisher initializing...")
         talker()
     except rospy.ROSInterruptException:
         pass

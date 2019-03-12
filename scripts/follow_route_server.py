@@ -12,7 +12,7 @@ import math
 
 def handle_follow_route(req):
 
-    print("New route acquired.")
+    print("FollowRoute received a new route.")
 
     if len(req.latVec) < 1:
         print("A route must have at least one waypoint.")
@@ -66,10 +66,10 @@ def handle_follow_route(req):
                 nowMsg.goal.target_pose.pose.position.y = nowGoal[1]
                 nowMsg.goal.target_pose.pose.orientation.z = nowGoal[2]
                 pub.publish(nowMsg)
-                print("Heading for next waypoint.")
+                print("FollowRoute is heading for next waypoint.")
             else:
                 finished = True
-                print("Finished.")
+                print("FollowRoute finished.")
 
         rate.sleep()
 
@@ -79,7 +79,7 @@ def handle_follow_route(req):
 def follow_route_server():
 
     rospy.init_node('follow_route_server')
-    print("FollowRoute service initializing...")
+    print("FollowRoute service waiting for call...")
     s = rospy.Service('follow_route', FollowRoute, handle_follow_route)
     rospy.spin()
 
