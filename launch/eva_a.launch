@@ -1,7 +1,7 @@
 <launch>
 
-    <param name="gasX" value="2.0" />
-    <param name="gasY" value="-2.5" />
+    <param name="gasX" value="3.0" />
+    <param name="gasY" value="-3.0" />
 
     <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_eva_b.launch"/>
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
