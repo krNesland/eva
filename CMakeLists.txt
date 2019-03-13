@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   move_base
   message_generation
+  gazebo_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -74,6 +75,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  gazebo_msgs
 )
 
 ################################################

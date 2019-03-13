@@ -2,21 +2,44 @@
 
 import rospy
 from std_msgs.msg import String
+from gazebo_msgs.msg import LinkState
 import tf
 import roslib
 import math
 import random
 
 # Note that we are now sing the estimated position and not the actual position in Gazebo.
+# Also sets the position of the gas cloud in Gazebo.
 
 def talker():
-    gasCenter = (1.9, -2.375)
+    rospy.init_node('gas_level_publisher', anonymous=True)
+
+    try:
+        gasX = rospy.get_param("gasX")
+        gasY = rospy.get_param("gasY")
+
+        gasCenter = (gasX, gasY)
+
+        print(gasCenter)  
+    except:
+        print("Not able to load gasCenter. Defaulting to (3.0, -3.0).")
+        gasCenter = (3.0, -3.0)
+
+    gasPub = rospy.Publisher('gazebo/set_link_state', LinkState, queue_size=10)
+    gasStateMsg = LinkState()
+    gasStateMsg.link_name = "gas_cloud"
+    gasStateMsg.pose.position.x = gasX
+    gasStateMsg.pose.position.y = gasY
+    gasStateMsg.pose.position.z = 0.3
+    gasStateMsg.pose.orientation.w = 1.0
+    gasStateMsg.reference_frame = "map"
 
     pub = rospy.Publisher('gas_level', String, queue_size=10)
-    rospy.init_node('gas_level_publisher', anonymous=True)
     listener = tf.TransformListener()
     rate = rospy.Rate(2) # 2hz
     while not rospy.is_shutdown():
+        gasPub.publish(gasStateMsg)
+        
         try:
             (trans,rot) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
             nowPos = (trans[0], trans[1])
