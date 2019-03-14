@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   move_base
   message_generation
   gazebo_msgs
+  cv_bridge
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
