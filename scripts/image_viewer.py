@@ -19,10 +19,7 @@ bridge = CvBridge()
 
 def callback(data):
     try:
-        if EXPERIMENT:
-            cvImage = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
-        else:
-            cvImage = bridge.imgmsg_to_cv2(data, "bgr8")
+        cvImage = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
     except CvBridgeError as e:
       print(e)
     
@@ -55,7 +52,7 @@ def listener():
     if EXPERIMENT:
         rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, callback)
     else:
-        rospy.Subscriber("/camera/rgb/image_raw", Image, callback) # Simulation.    
+        rospy.Subscriber("/camera/rgb/image_raw/compressed", CompressedImage, callback) # Simulation.    
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
