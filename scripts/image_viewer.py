@@ -4,7 +4,7 @@ from __future__ import print_function
 import roslib
 import sys
 import rospy
-import cv2
+import cv
 from std_msgs.msg import String
 from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
@@ -23,8 +23,8 @@ def callback(data):
     except CvBridgeError as e:
       print(e)   
 
-    cv2.imshow("Image window", cvImage)
-    cv2.waitKey(3)
+    cv.imshow("Image window", cvImage)
+    cv.waitKey(3)
     
 def listener():
     rospy.init_node('image_viewer', anonymous=True)
