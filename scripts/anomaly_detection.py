@@ -16,6 +16,7 @@ import math
 # Will need the scan and the expected range along every ray from the map as input.
 
 nowPose = [0.0, 0.0, 0.0]
+mapData = np.zeros((384, 384), dtype=np.int8)
 
 def update_pose():
     global nowPose
@@ -31,13 +32,31 @@ def update_pose():
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
-
 def scan_callback(data):
     global nowPose
+    global mapData
 
-    print(nowPose)
+    r = data.ranges[10]
+    thetaL = -3.6*(math.pi/180)
+    thetaB = nowPose[2]
+
+    xB = nowPose[0]
+    yB = nowPose[1]
+
+    xI = int(math.floor(20*xB + 200))
+    yI = int(math.floor(-20*yB + 184))
+
+    mapData[yI][xI] = 100
+
+    print((xB, yB))
+    print((xI, yI))
+
+    cv.imshow("Image window", mapData)
+    cv.waitKey(3)
 
 def map_callback(data):
+    global mapData
+
     '''
     print('Width:' + str(data.info.width))
     print('Height:' + str(data.info.height))
@@ -50,9 +69,7 @@ def map_callback(data):
 
     img = np.reshape(data.data, (384, 384)).astype(np.int8)
     img = np.flipud(img)
-    print(data.info.origin)
-    cv.imshow("Image window", img)
-    cv.waitKey()
+    mapData = img
 
 def listener():
     rospy.init_node('anomaly_detection', anonymous=True)
