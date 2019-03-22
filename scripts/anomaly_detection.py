@@ -9,33 +9,17 @@ import cv2 as cv
 import numpy as np
 import tf
 import math
+import matplotlib.pyplot as plt
 
 # /scan is a list of 360 ranges (polar coordinates).
 # /map is an occupancy grid map (matrix).
 
-nowPose = [0.0, 0.0, -0.0]
+nowPose = [0.0, 0.0, 0.0]
 mapData = np.zeros((384, 384), dtype=np.int8)
 
-
-def update_pose():
-    global nowPose
-
-    tfListener = tf.TransformListener()
-
-    while not rospy.is_shutdown():
-        try:
-            (trans, rot) = tfListener.lookupTransform(
-                '/map', '/base_footprint', rospy.Time(0))
-            nowPose[0] = trans[0]
-            nowPose[1] = trans[1]
-            # Quaternion to theta angle.
-            nowPose[2] = math.atan2(
-                2*(rot[0]*rot[1] + rot[2]*rot[3]), 1 - 2*(rot[1]*rot[1] + rot[2]*rot[2]))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
-
-
 def scan_callback(data):
+    rospy.sleep(2) # Let the correct pose be set.
+
     global nowPose
     global mapData
 
@@ -49,6 +33,9 @@ def scan_callback(data):
     thetaB = nowPose[2]
     xB = nowPose[0]
     yB = nowPose[1]
+
+    scanVec = np.zeros((359,), dtype=np.float32)
+    mapVec = np.zeros((359,), dtype=np.float32)
 
     print("--------------------------------")
     print("NEW SCAN")
@@ -68,14 +55,13 @@ def scan_callback(data):
         # Line rasterization algorithm 1
         # Positive direction is opposite in image relative to map.
 
+        # Want the angles to be [-pi, pi].
         if theta < math.pi:
             thetaI = -theta
         else:
             thetaI = 2*math.pi - theta
 
         s = math.tan(thetaI) # dy/dx
-
-        print("THETA I: " + str(thetaI))
 
         # Starting point for line.
         x = xI
@@ -110,12 +96,12 @@ def scan_callback(data):
         # Tracing until border of map or collision.
         if xAxis:
             while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
-                mapData[y][x] = 45
+                #mapData[y][x] = 45
                 x = x + inc
                 y = yI + int(round(s*(x - xI)))
         else:
             while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
-                mapData[y][x] = 45
+                #mapData[y][x] = 45
                 y = y + inc
                 x = xI + int(round((y - yI)/s))
 
@@ -131,18 +117,49 @@ def scan_callback(data):
         print("Scan dist: " + str(scanRange))
         print(" ")
 
-        cv.imshow("Image window", mapData)
-        cv.waitKey(3)
+        scanVec[i] = scanRange
+        mapVec[i] = mapRange
 
-        rospy.sleep(0.1)
+        #cv.imshow("Image window", mapData)
+        #cv.waitKey(3)
+
+
+    scanVec[scanVec == float('inf')] = 0.0
+    mapVec[mapVec == float('inf')] = 0.0
+
+    plt.plot(np.arange(angleMin, angleMax, angleInc, dtype=np.float32), mapVec, label='Map')
+    plt.plot(np.arange(angleMin, angleMax, angleInc, dtype=np.float32), scanVec, label='Scan')
+    plt.legend()
+    plt.show()
+
+
+    rospy.sleep(60)
+
+    
 
 
 def map_callback(data):
     global mapData
+    global nowPose
 
     img = np.reshape(data.data, (384, 384)).astype(np.int8)
     img = np.flipud(img)
     mapData = img
+
+    # Update pose.
+    tfListener = tf.TransformListener()
+
+    while not rospy.is_shutdown():
+        try:
+            (trans, rot) = tfListener.lookupTransform(
+                '/map', '/base_footprint', rospy.Time(0))
+            nowPose[0] = trans[0]
+            nowPose[1] = trans[1]
+            # Quaternion to theta angle.
+            nowPose[2] = math.atan2(
+                2*(rot[0]*rot[1] + rot[2]*rot[3]), 1 - 2*(rot[1]*rot[1] + rot[2]*rot[2]))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
 
 
 def listener():
@@ -150,7 +167,6 @@ def listener():
 
     rospy.Subscriber('/map', OccupancyGrid, map_callback)
     rospy.Subscriber('/scan', LaserScan, scan_callback)
-    update_pose()
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
