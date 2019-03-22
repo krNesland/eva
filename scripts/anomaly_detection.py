@@ -11,11 +11,9 @@ import tf
 import math
 
 # /scan is a list of 360 ranges (polar coordinates).
-#
+# /map is an occupancy grid map (matrix).
 
-# Will need the scan and the expected range along every ray from the map as input.
-
-nowPose = [0.0, 0.0, 0.0]
+nowPose = [0.0, 0.0, -0.0]
 mapData = np.zeros((384, 384), dtype=np.int8)
 
 
@@ -41,95 +39,106 @@ def scan_callback(data):
     global nowPose
     global mapData
 
-    rayNum = 45
+    maxRange = data.range_max
+    minRange = data.range_min
 
-    r = data.ranges[45]
-    thetaL = 45*data.angle_increment
+    angleMin = data.angle_min
+    angleMax = data.angle_max
+    angleInc = data.angle_increment
+
     thetaB = nowPose[2]
-
     xB = nowPose[0]
     yB = nowPose[1]
 
-    # Not exactly sure why 200 and 184. 184 = 384 - 200.
-    xI = int(math.floor(20*xB + 200))
-    yI = int(math.floor(-20*yB + 184))
+    print("--------------------------------")
+    print("NEW SCAN")
+    print("--------------------------------")
+    for i, angle in enumerate(np.arange(angleMin, angleMax, angleInc, dtype=np.float32)):
+        # Angle is the angle of the ray relative to the robot.
+        print("Angle: " + str(angle))
+        
+        scanRange = data.ranges[i]
 
-    theta = thetaB + thetaL
+        # Not exactly sure why 200 and 184. 184 = 384 - 200.
+        xI = int(math.floor(20*xB + 200))
+        yI = int(math.floor(-20*yB + 184))
 
-    # Line rasterization algorithm 1
-    # Positive direction is opposite in image relative to map.
-    thetaI = -theta
-    s = math.tan(thetaI)
+        theta = thetaB + angle
 
-    # Starting point for line.
-    x = xI
-    y = yI
+        # Line rasterization algorithm 1
+        # Positive direction is opposite in image relative to map.
 
-    if thetaI > (3/4.0)*math.pi: # 4
-        inc = -1
-        xAxis = True
-        print(4)
-    elif thetaI > (2/4.0)*math.pi: # 3
-        inc = 1
-        xAxis = False
-        print(3)
-    elif thetaI > (1/4.0)*math.pi: # 2
-        inc = 1
-        xAxis = False
-        print(2)
-    elif thetaI > (0/4.0)*math.pi: # 1
-        inc = 1
-        xAxis = True
-        print(1)
-    elif thetaI > (-1/4.0)*math.pi: # 8
-        inc = 1
-        xAxis = True
-        print(8)
-    elif thetaI > (-2/4.0)*math.pi: # 7
-        inc = -1
-        xAxis = False
-        print(7)
-    elif thetaI > (-3/4.0)*math.pi: # 6
-        inc = -1
-        xAxis = False
-        print(6)
-    else: # 5
-        inc = -1
-        xAxis = True
-        print(5)
+        if theta < math.pi:
+            thetaI = -theta
+        else:
+            thetaI = 2*math.pi - theta
 
-    if xAxis:
-        while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
-            mapData[y][x] = 45
-            x = x + inc
-            y = yI + int(round(s*(x - xI)))
-    else:
-        while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
-            mapData[y][x] = 45
-            y = y + inc
-            x = xI + int(round((y - yI)/s))
+        s = math.tan(thetaI) # dy/dx
 
-    dist = math.sqrt((x - xI)*(x - xI) + (y - yI)*(y - yI))/20
+        print("THETA I: " + str(thetaI))
 
-    print("Map dist: " + str(dist))
-    print("Scan dist: " + str(r))
+        # Starting point for line.
+        x = xI
+        y = yI
 
-    cv.imshow("Image window", mapData)
-    cv.waitKey(3)
+        # Choosing values depending on octant.
+        if thetaI > (3/4.0)*math.pi: # 4
+            inc = -1
+            xAxis = True
+        elif thetaI > (2/4.0)*math.pi: # 3
+            inc = 1
+            xAxis = False
+        elif thetaI > (1/4.0)*math.pi: # 2
+            inc = 1
+            xAxis = False
+        elif thetaI > (0/4.0)*math.pi: # 1
+            inc = 1
+            xAxis = True
+        elif thetaI > (-1/4.0)*math.pi: # 8
+            inc = 1
+            xAxis = True
+        elif thetaI > (-2/4.0)*math.pi: # 7
+            inc = -1
+            xAxis = False
+        elif thetaI > (-3/4.0)*math.pi: # 6
+            inc = -1
+            xAxis = False
+        else: # 5
+            inc = -1
+            xAxis = True
+
+        # Tracing until border of map or collision.
+        if xAxis:
+            while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
+                mapData[y][x] = 45
+                x = x + inc
+                y = yI + int(round(s*(x - xI)))
+        else:
+            while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
+                mapData[y][x] = 45
+                y = y + inc
+                x = xI + int(round((y - yI)/s))
+
+        mapRange = math.sqrt((x - xI)*(x - xI) + (y - yI)*(y - yI))/20
+
+        if mapRange > maxRange:
+            mapRange = float('inf')
+        
+        if mapRange < minRange:
+            mapRange = 0
+
+        print("Map dist: " + str(mapRange))
+        print("Scan dist: " + str(scanRange))
+        print(" ")
+
+        cv.imshow("Image window", mapData)
+        cv.waitKey(3)
+
+        rospy.sleep(0.1)
 
 
 def map_callback(data):
     global mapData
-
-    '''
-    print('Width:' + str(data.info.width))
-    print('Height:' + str(data.info.height))
-    print('Resolution:' + str(data.info.resolution))
-
-    print(data.info.origin)
-
-    print(data.data)
-    '''
 
     img = np.reshape(data.data, (384, 384)).astype(np.int8)
     img = np.flipud(img)
