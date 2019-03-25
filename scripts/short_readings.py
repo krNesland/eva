@@ -8,6 +8,7 @@ from nav_msgs.msg import OccupancyGrid
 from eva_a.msg import *
 import numpy as np
 import tf
+import cv2 as cv
 import math
 import matplotlib.pyplot as plt
 
@@ -24,7 +25,7 @@ def scan_callback(data):
     global nowPose
     global mapData
     global pub
-    shortData = np.zeros((384, 384), dtype=np.uint8)
+    shortData = np.zeros((384, 384), dtype=np.int8)
     distDelta = 0.3 # How much shorter a reading should be compared to the expected to be considered a possible obstacle.
 
     maxRange = data.range_max
@@ -93,28 +94,43 @@ def scan_callback(data):
             inc = -1
             xAxis = True
 
+        passedScan = False # If the ray tracing has passed the scan.
+
         # Tracing until border of map or collision.
         if xAxis:
-            while x < 383 and x > 0 and y < 383 and y > 0 and mapData[y][x] < 50:
+            while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
                 #mapData[y][x] = 45
+                mapRange = math.sqrt((x - xI)*(x - xI) + (y - yI)*(y - yI))/20
+
+                # Storing the position where the ray casting goes further than the scan.
+                if (not passedScan) and (mapRange > scanRange):
+                    scanPos = (x, y)
+                    passedScan = True
+
                 x = x + inc
                 y = yI + int(round(s*(x - xI)))
         else:
-            while x < 383 and x > 0 and y < 383 and y > 0 and mapData[y][x] < 50:
+            while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
                 #mapData[y][x] = 45
+                mapRange = math.sqrt((x - xI)*(x - xI) + (y - yI)*(y - yI))/20
+
+                if (not passedScan) and (mapRange > scanRange):
+                    scanPos = (x, y)
+                    passedScan = True
+
                 y = y + inc
                 x = xI + int(round((y - yI)/s))
 
         mapRange = math.sqrt((x - xI)*(x - xI) + (y - yI)*(y - yI))/20
-
+        
         if mapRange > maxRange:
             mapRange = float('inf')
-        
+            
         if mapRange < minRange:
             mapRange = 0
-
+        
         if scanRange < mapRange - distDelta:
-            shortData[y][x] = 1
+            shortData[scanPos[1], scanPos[0]] = 1
     
     if np.any(shortData):
         shortMsg = ShortData()
@@ -123,6 +139,10 @@ def scan_callback(data):
         shortMsg.width = 384
         shortMsg.data = (shortData.flatten()).tolist()
         pub.publish(shortMsg)
+
+    shortData[shortData > 0] = 100
+    cv.imshow("Image window2", shortData)
+    cv.waitKey(3)
 
 def map_callback(data):
     global mapData
