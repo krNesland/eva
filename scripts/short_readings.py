@@ -5,24 +5,27 @@ import sys
 import rospy
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import OccupancyGrid
-import cv2 as cv
+from eva_a.msg import *
 import numpy as np
 import tf
 import math
+import matplotlib.pyplot as plt
 
 # /scan is a list of 360 ranges (polar coordinates).
 # /map is an occupancy grid map (matrix).
 
 nowPose = [0.0, 0.0, 0.0]
 mapData = np.zeros((384, 384), dtype=np.int8)
-
-# FILE NOT IN USE.
+pub = rospy.Publisher('short_scan', ShortData, queue_size=10)
 
 def scan_callback(data):
     rospy.sleep(2) # Let the correct pose be set.
 
     global nowPose
     global mapData
+    global pub
+    shortData = np.zeros((384, 384), dtype=np.uint8)
+    distDelta = 0.3 # How much shorter a reading should be compared to the expected to be considered a possible obstacle.
 
     maxRange = data.range_max
     minRange = data.range_min
@@ -35,15 +38,11 @@ def scan_callback(data):
     xB = nowPose[0]
     yB = nowPose[1]
 
-    scanVec = np.zeros((359,), dtype=np.float32)
-    mapVec = np.zeros((359,), dtype=np.float32)
-
     print("--------------------------------")
     print("NEW SCAN")
     print("--------------------------------")
     for i, angle in enumerate(np.arange(angleMin, angleMax, angleInc, dtype=np.float32)):
         # Angle is the angle of the ray relative to the robot.
-        print("Angle: " + str(angle))
         
         scanRange = data.ranges[i]
 
@@ -96,12 +95,12 @@ def scan_callback(data):
 
         # Tracing until border of map or collision.
         if xAxis:
-            while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
+            while x < 383 and x > 0 and y < 383 and y > 0 and mapData[y][x] < 50:
                 #mapData[y][x] = 45
                 x = x + inc
                 y = yI + int(round(s*(x - xI)))
         else:
-            while x < 384 and x >= 0 and y < 384 and y >= 0 and mapData[y][x] < 50:
+            while x < 383 and x > 0 and y < 383 and y > 0 and mapData[y][x] < 50:
                 #mapData[y][x] = 45
                 y = y + inc
                 x = xI + int(round((y - yI)/s))
@@ -114,30 +113,16 @@ def scan_callback(data):
         if mapRange < minRange:
             mapRange = 0
 
-        print("Map dist: " + str(mapRange))
-        print("Scan dist: " + str(scanRange))
-        print(" ")
-
-        scanVec[i] = scanRange
-        mapVec[i] = mapRange
-
-        #cv.imshow("Image window", mapData)
-        #cv.waitKey(3)
-
-
-    scanVec[scanVec == float('inf')] = 0.0
-    mapVec[mapVec == float('inf')] = 0.0
-
-    plt.plot(np.arange(angleMin, angleMax, angleInc, dtype=np.float32), mapVec, label='Map')
-    plt.plot(np.arange(angleMin, angleMax, angleInc, dtype=np.float32), scanVec, label='Scan')
-    plt.legend()
-    plt.show()
-
-
-    rospy.sleep(60)
-
+        if scanRange < mapRange - distDelta:
+            shortData[y][x] = 1
     
-
+    if np.any(shortData):
+        shortMsg = ShortData()
+        shortMsg.header.frame_id = 'opencv'
+        shortMsg.height = 384
+        shortMsg.width = 384
+        shortMsg.data = (shortData.flatten()).tolist()
+        pub.publish(shortMsg)
 
 def map_callback(data):
     global mapData
@@ -164,7 +149,7 @@ def map_callback(data):
 
 
 def listener():
-    rospy.init_node('anomaly_detection', anonymous=True)
+    rospy.init_node('short_readings', anonymous=True)
 
     rospy.Subscriber('/map', OccupancyGrid, map_callback)
     rospy.Subscriber('/scan', LaserScan, scan_callback)
