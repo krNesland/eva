@@ -172,7 +172,7 @@ def listener():
     rospy.init_node('short_readings', anonymous=True)
 
     rospy.Subscriber('/map', OccupancyGrid, map_callback)
-    rospy.Subscriber('/scan', LaserScan, scan_callback)
+    rospy.Subscriber('/scan', LaserScan, scan_callback, queue_size=1)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
