@@ -3,7 +3,7 @@ gasDial.innerHTML = '49';
 
 var gasListener = new ROSLIB.Topic({
     ros : ros,
-    name : '/gas_level',
+    name : '/eva/gas_level',
     messageType : 'std_msgs/String'
   });
 

@@ -1,49 +1,59 @@
 #!/usr/bin/env python
 
+# Publishing a gas level based on how close it is to a pre-defined gas cloud.
+
+# Subscribe: /tf, 
+# Publish: /eva/gas_level, /gazebo/set_link_state
+
 import rospy
-from std_msgs.msg import String
-from gazebo_msgs.msg import LinkState
 import tf
 import roslib
 import math
 import random
 
-# Note that we are now sing the estimated position and not the actual position in Gazebo.
+from std_msgs.msg import String
+from gazebo_msgs.msg import LinkState
+
+# Note that we are now using the estimated position and not the actual position in Gazebo.
 # Also sets the position of the gas cloud in Gazebo.
 
 def talker():
     rospy.init_node('gas_level_publisher', anonymous=True)
 
     try:
-        gasX = rospy.get_param("gasX")
-        gasY = rospy.get_param("gasY")
+        gas_x = rospy.get_param("/eva/gasX")
+        gas_y = rospy.get_param("/eva/gasY")
 
-        gasCenter = (gasX, gasY)
+        gas_center = (gas_x, gas_y)
 
-        print(gasCenter)  
+        print(gas_center)  
     except:
         print("Not able to load gasCenter. Defaulting to (3.0, -3.0).")
-        gasCenter = (3.0, -3.0)
+        
+        gas_x = 3.0
+        gas_y = -3.0
+        
+        gas_center = (gas_x, gas_y)
 
-    gasPub = rospy.Publisher('gazebo/set_link_state', LinkState, queue_size=10)
-    gasStateMsg = LinkState()
-    gasStateMsg.link_name = "gas_cloud"
-    gasStateMsg.pose.position.x = gasX
-    gasStateMsg.pose.position.y = gasY
-    gasStateMsg.pose.position.z = 0.3
-    gasStateMsg.pose.orientation.w = 1.0
-    gasStateMsg.reference_frame = "map"
+    gas_pub = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=10)
+    gas_state_msg = LinkState()
+    gas_state_msg.link_name = 'gas_cloud'
+    gas_state_msg.pose.position.x = gas_x
+    gas_state_msg.pose.position.y = gas_y
+    gas_state_msg.pose.position.z = 0.3
+    gas_state_msg.pose.orientation.w = 1.0
+    gas_state_msg.reference_frame = 'map'
 
-    pub = rospy.Publisher('gas_level', String, queue_size=10)
+    pub = rospy.Publisher('/eva/gas_level', String, queue_size=10)
     listener = tf.TransformListener()
     rate = rospy.Rate(2) # 2hz
     while not rospy.is_shutdown():
-        gasPub.publish(gasStateMsg)
+        gas_pub.publish(gas_state_msg)
         
         try:
             (trans,rot) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
-            nowPos = (trans[0], trans[1])
-            dist = math.sqrt((gasCenter[0] - nowPos[0])**2 + (gasCenter[1] - nowPos[1])**2)
+            now_pos = (trans[0], trans[1])
+            dist = math.sqrt((gas_center[0] - now_pos[0])**2 + (gas_center[1] - now_pos[1])**2)
 
             level = 0.0
             noise = random.gauss(0, 0.5) # Mean and Std.
@@ -56,8 +66,8 @@ def talker():
             if level < 0.0:
                 level = 0.0
 
-            gasStr = "%.1f" % level
-            pub.publish(gasStr)
+            gas_str = "%.1f" % level
+            pub.publish(gas_str)
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue

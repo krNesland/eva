@@ -115,7 +115,7 @@ def handle_gas_center(req):
 def gas_center_server():
 
     rospy.init_node('gas_center_server')
-    rospy.Subscriber('gas_level', String, gasLevelCallback)
+    rospy.Subscriber('/eva/gas_level', String, gasLevelCallback)
     print("GasCenter service waiting for call..")
     s = rospy.Service('gas_center', GasCenter, handle_gas_center)
     rospy.spin()

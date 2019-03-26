@@ -58,7 +58,7 @@ def map():
 def listener():
     rospy.init_node('gas_map', anonymous=True)
 
-    rospy.Subscriber("gas_level", String, callback)
+    rospy.Subscriber('/eva/gas_level', String, callback)
 
     map()
 
