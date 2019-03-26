@@ -11,3 +11,20 @@
 #gas-dial-container {
     width: 300px;
 }
+
+.header-img {
+    background-image: url("../img/johan_sverdrup_blur.jpg");
+    background-size: 1920px 600px;
+    height: 600px;
+    width: 100%;
+    padding: 150px;
+    font-size: 150px;
+    color: white;
+}
+
+.footer-img {
+    background-image: url("../img/johan_sverdrup_blur_bottom.jpg");
+    background-size: 1920px 200px;
+    height: 100px;
+    width: 100%;
+}
