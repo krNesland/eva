@@ -1,7 +1,16 @@
 <launch>
 
-    <param name="gasX" value="3.0" />
-    <param name="gasY" value="-3.0" />
+    <param name="/eva/gasX" value="3.0" />
+    <param name="/eva/gasY" value="-3.0" />
+
+    <param name="/eva/mapWidth" value="384" />
+    <param name="/eva/mapHeight" value="384" />
+    <param name="/eva/mapPixelsPerMeter" value="20" />
+
+    <param name="/eva/scanRayDistanceThreshold" value="0.3" />
+
+    <param name="/eva/maxCircleRadii" value="0.5" />
+    <param name="/eva/minCircleRadii" value="0.1" />
 
     <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_eva_b.launch"/>
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
