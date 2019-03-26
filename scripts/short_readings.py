@@ -39,9 +39,8 @@ def scan_callback(data):
     xB = nowPose[0]
     yB = nowPose[1]
 
-    print("--------------------------------")
-    print("NEW SCAN")
-    print("--------------------------------")
+    print("New scan received.")
+
     for i, angle in enumerate(np.arange(angleMin, angleMax, angleInc, dtype=np.float32)):
         # Angle is the angle of the ray relative to the robot.
         
@@ -139,10 +138,6 @@ def scan_callback(data):
         shortMsg.width = 384
         shortMsg.data = (shortData.flatten()).tolist()
         pub.publish(shortMsg)
-
-    shortData[shortData > 0] = 100
-    cv.imshow("Image window2", shortData)
-    cv.waitKey(3)
 
 def map_callback(data):
     global mapData
