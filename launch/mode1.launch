@@ -1,0 +1,8 @@
+<launch>
+
+    <include file="$(find eva_a)/launch/turtlebot3_eva_b.launch"/>
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+
+    <node pkg="web_video_server" name="web_video_server" type="web_video_server"/>
+
+</launch>
