@@ -6,7 +6,10 @@ var tfClient = new ROSLIB.TFClient({
 });
 
 console.log('Waiting for transforms.');
-var currMarker = L.marker([1.5, 1.5]).addTo(map);
+var currMarker = L.circleMarker([1.5, 1.5], {
+    color: 'black',
+    fillColor: '#777'
+}).addTo(map);
 
 tfClient.subscribe('base_footprint', function(tf) {
     currMarker.setLatLng(L.latLng(tf.translation.x, -tf.translation.y));
