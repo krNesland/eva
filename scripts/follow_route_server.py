@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 
-from eva_a.srv import *
+# Follows the requested route
+
+# Subscribe: /tf
+# Publish: /move_base/goal
+
 import rospy
 import tf
 import roslib
-from move_base_msgs.msg import MoveBaseActionGoal
 import math
+
+from eva_a.srv import *
+from move_base_msgs.msg import MoveBaseActionGoal
 
 # Could maybe benefit from being implemented as an action and not a server. Actions can report back during execution, not only at the end.
 # Does not currently return an error if the route is cancelled.
@@ -24,13 +30,15 @@ def handle_follow_route(req):
 
     finished = False
     waypoints = []
-    dist = 1.0 # Initialization.
+    dist = 1.0
 
+    # Building up the list of commands.
     for i in range(len(req.latVec)):
         x = req.latVec[i]
         y = -req.lngVec[i]
         angle = 0.0
 
+        # If the waypoint is not the last one, we want the angle to head towards the next waypoint.
         if i < (len(req.latVec) - 1):
             dx = req.latVec[i + 1] - x
             dy = -req.lngVec[i + 1] - y
@@ -39,33 +47,35 @@ def handle_follow_route(req):
         waypoints.append((x, y, angle))
 
     listener = tf.TransformListener()
-    pub = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
+    pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=10)
 
-    nowGoal = waypoints.pop(0)
-    nowMsg = MoveBaseActionGoal()
-    nowMsg.goal.target_pose.header.frame_id = "map"
-    nowMsg.goal.target_pose.pose.position.x = nowGoal[0]
-    nowMsg.goal.target_pose.pose.position.y = nowGoal[1]
-    nowMsg.goal.target_pose.pose.orientation.w = 1.0
-    pub.publish(nowMsg)
+    now_goal = waypoints.pop(0)
+    now_msg = MoveBaseActionGoal()
+    now_msg.goal.target_pose.header.frame_id = "map"
+    now_msg.goal.target_pose.pose.position.x = now_goal[0]
+    now_msg.goal.target_pose.pose.position.y = now_goal[1]
+    now_msg.goal.target_pose.pose.orientation.w = 1.0
+    pub.publish(now_msg)
 
     rate = rospy.Rate(10.0)
     while (not rospy.is_shutdown()) and (not finished):
         try:
             (trans,rot) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
-            nowPos = (trans[0], trans[1])
-            dist = math.sqrt((nowPos[0] - nowGoal[0])**2 + (nowPos[1] - nowGoal[1])**2)
+            # Current position of robot.
+            now_pos = (trans[0], trans[1])
+            # Distance to waypoint.
+            dist = math.sqrt((now_pos[0] - now_goal[0])**2 + (now_pos[1] - now_goal[1])**2)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
-
+        # If close enough to waypoint, we head towards the next waypoint.
         if dist < 0.1:
             if not len(waypoints) < 1:
-                nowGoal = waypoints.pop(0)
-                nowMsg.goal.target_pose.pose.position.x = nowGoal[0]
-                nowMsg.goal.target_pose.pose.position.y = nowGoal[1]
-                nowMsg.goal.target_pose.pose.orientation.z = nowGoal[2]
-                pub.publish(nowMsg)
+                now_goal = waypoints.pop(0)
+                now_msg.goal.target_pose.pose.position.x = now_goal[0]
+                now_msg.goal.target_pose.pose.position.y = now_goal[1]
+                now_msg.goal.target_pose.pose.orientation.z = now_goal[2]
+                pub.publish(now_msg)
                 print("FollowRoute is heading for next waypoint.")
             else:
                 finished = True
@@ -80,7 +90,7 @@ def follow_route_server():
 
     rospy.init_node('follow_route_server')
     print("FollowRoute service waiting for call...")
-    s = rospy.Service('follow_route', FollowRoute, handle_follow_route)
+    s = rospy.Service('/eva/follow_route', FollowRoute, handle_follow_route)
     rospy.spin()
 
 if __name__ == "__main__":

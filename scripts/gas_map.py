@@ -1,28 +1,35 @@
 #!/usr/bin/env python
 
+# Makes a map of the gas concentration.
+
+# Subscribe: /eva/gas_level, /tf
+
 import roslib
 import sys
 import rospy
-from std_msgs.msg import String
 import numpy as np
 import tf
 import math
 import cv2 as cv
 
-gasLevel = 0.0
+from std_msgs.msg import String
+
+gas_level = 0.0
 
 def callback(data):
-    global gasLevel
-    gasLevel = float(data.data)
-    print(gasLevel)
+    global gas_level
+    gas_level = float(data.data)
+    print(gas_level)
 
-def visualize(gasMap):
-    gasMap = gasMap*0.01
-    visMap = cv.resize(gasMap, (1000, 1000))
+# Increasing the size of the map and visualizing.
+def visualize(gas_map):
+    gas_map = gas_map*0.01
+    vis_map = cv.resize(gas_map, (1000, 1000))
 
-    cv.imshow("Gas map", visMap)
+    cv.imshow("Gas map", vis_map)
     cv.waitKey(3)
 
+# Converting from the map-coordinate system to the image.
 def get_map_indices(x, y):
     i = 99 - int(math.floor(10*x))
     j = -int(math.floor(10*y))
@@ -35,25 +42,27 @@ def get_map_indices(x, y):
     return (i, j)
 
 def map():
-    gasMap = np.zeros([100, 100], dtype=np.float32)
-    global gasLevel
-    tfListener = tf.TransformListener()
+    gas_map = np.zeros([100, 100], dtype=np.float32)
+    global gas_level
+    tf_listener = tf.TransformListener()
 
     while not rospy.is_shutdown():
         try:
-            (trans,rot) = tfListener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
-            nowPos = (trans[0], trans[1])
-            i, j = get_map_indices(nowPos[0], nowPos[1])
+            (trans,rot) = tf_listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+            # Position of the robot on the map.
+            now_pos = (trans[0], trans[1])
+            i, j = get_map_indices(now_pos[0], now_pos[1])
 
             if (i == -1) or (j == -1):
                 print("Estimated position out of map bounds.")
             else:
-                gasMap[i][j] = (gasMap[i][j] + gasLevel)/2
+                # New level at the square is the average of the old level and the new reading.
+                gas_map[i][j] = (gas_map[i][j] + gas_level)/2
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
-        visualize(gasMap)
+        visualize(gas_map)
     
 def listener():
     rospy.init_node('gas_map', anonymous=True)

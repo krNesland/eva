@@ -1,45 +1,48 @@
 #!/usr/bin/env python
 
+# Subscribe: /camera/rgb/image_raw/compressed
+
 import roslib
-import sys
 import rospy
 import cv2 as cv
-from std_msgs.msg import String
-from sensor_msgs.msg import CompressedImage
-from cv_bridge import CvBridge, CvBridgeError
 import math
 import numpy as np
 
-EXPERIMENT = True # Experiment if real life Turtlebot is running.
+from std_msgs.msg import String
+from sensor_msgs.msg import CompressedImage
+from cv_bridge import CvBridge, CvBridgeError
+
+EXPERIMENT = False # Experiment if real life Turtlebot is running.
 
 bridge = CvBridge()
 
 def callback(data):
     try:
-        cvImage = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+        cv_image = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
     except CvBridgeError as e:
       print(e)
     
-    (rows, cols, channels) = cvImage.shape
+    (rows, cols, channels) = cv_image.shape
 
-    hsv = cv.cvtColor(cvImage, cv.COLOR_BGR2HSV)
+    hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
 
-    lowerBlue = np.array([110,50,50])
-    upperBlue = np.array([130,255,255])
+    lower_blue = np.array([110,50,50])
+    upper_blue = np.array([130,255,255])
 
-    mask = cv.inRange(hsv, lowerBlue, upperBlue)
+    mask = cv.inRange(hsv, lower_blue, upper_blue)
 
     # Vectorized version of finding the centroid.
 
-    xv, yv = np.meshgrid(range(0, cols), range(0, rows))
+    x_arms, y_arms = np.meshgrid(range(0, cols), range(0, rows))
 
-    xm = np.multiply(xv, mask)
-    ym = np.multiply(yv, mask)
+    x_moments = np.multiply(x_arms, mask)
+    y_moments = np.multiply(y_arms, mask)
 
     total = np.sum(mask)
-    xMoment = np.sum(xm)
-    yMoment = np.sum(ym)
+    x_moment = np.sum(x_moments)
+    y_moment = np.sum(y_moments)
 
+    '''
     # Trying to remove outliers. Only works when there is a single blue spot one is looking for. Maybe it makes it too slow? Lots of calculations.
     if not (total == 0):
         xArm = xMoment/total
@@ -66,20 +69,20 @@ def callback(data):
         total = np.sum(mask)
         xMoment = np.sum(xm)
         yMoment = np.sum(ym)
-
+    '''
 
     if not (total == 0):
-        xArm = xMoment/total
-        yArm = yMoment/total
+        x_arm = x_moment/total
+        y_arm = y_moment/total
 
-        xArm = int(math.floor(xArm))
-        yArm = int(math.floor(yArm))
+        x_arm = int(math.floor(x_arm))
+        y_arm = int(math.floor(y_arm))
 
-        cv.drawMarker(cvImage, (xArm, yArm), (0, 0, 255))
+        cv.drawMarker(cv_image, (x_arm, y_arm), (0, 0, 255))
     else:
         print("No colour in the correct range was found.")
 
-    cv.imshow("Image window", cvImage)
+    cv.imshow("Image window", cv_image)
     cv.imshow("Mask window", mask)
     cv.waitKey(3)
     

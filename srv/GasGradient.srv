@@ -1,0 +1,4 @@
+# This service moves the robot towards the gas gradient.
+
+---
+uint8 success

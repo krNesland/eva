@@ -3,7 +3,7 @@
 
 var followRouteClient = new ROSLIB.Service({
     ros : ros,
-    name : '/follow_route',
+    name : '/eva/follow_route',
     serviceType : 'eva_a/FollowRoute'
 });
 

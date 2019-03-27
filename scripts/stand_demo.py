@@ -12,17 +12,17 @@ import math
 import numpy as np
 
 bridge = CvBridge()
-cvImage = np.zeros((480, 640, 3), np.uint8)
+cv_image = np.zeros((480, 640, 3), np.uint8)
 
 def callback(data):
-    global cvImage
+    global cv_image
     try:
-        cvImage = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+        cv_image = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
     except CvBridgeError as e:
         print(e)
     
 def objectTracking():
-    global cvImage
+    global cv_image
 
     rospy.sleep(2.0)
 
@@ -32,7 +32,7 @@ def objectTracking():
     ok = tracker.init(frame, bbox)
 
     while True:
-        frame = cvImage
+        frame = cv_image
     
         # Start timer
         timer = cv2.getTickCount()
