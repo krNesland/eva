@@ -11,18 +11,30 @@ import cv2 as cv
 import math
 
 from eva_a.msg import *
+from eva_a.srv import *
 
 # Could have had the (x, y)-dimensions of the accumulator in a different size than the image.
+
+img = np.zeros((500, 500), dtype=np.uint8)
+
+def callback(data):
+    global img
+    img_data = np.array(data.data, dtype=np.uint8)
+    img = np.reshape(img_data, (data.height, data.width))
+
+    img[img > 0] = 255
 
 
 def hough_circles(img):
     try:
-        max_r = rospy.get_param('/eva/maxCircleRadii')
-        min_r = rospy.get_param('/eva/minCircleRadii')
+        map_pixels_per_meter = rospy.get_param('/eva/mapPixelsPerMeter')
+        max_r = rospy.get_param('/eva/maxCircleRadii')*map_pixels_per_meter
+        min_r = rospy.get_param('/eva/minCircleRadii')*map_pixels_per_meter
     except:
         print("Unable to load circle limits, defaulting to 0.1 and 0.5.")
-        max_r = 0.5*20
-        min_r = 0.1*20
+        map_pixels_per_meter = 20
+        max_r = 0.5*mapPixelsPerMeter
+        min_r = 0.1*mapPixelsPerMeter
 
     # The number of different radii that are searched for.
     num_r = 8
@@ -55,8 +67,8 @@ def hough_circles(img):
 
                     old_centers.append((b, a))
 
-    # If votes have beed gathered.
-    if not np.max(acc) < 1:
+    # If enough votes have beed gathered.
+    if not np.max(acc) < 5:
         # Index of the max in a flattened version of the array.
         best_index = int(np.argmax(acc))
 
@@ -69,31 +81,43 @@ def hough_circles(img):
 
         best_radius = int((np.linspace(min_r, max_r, num_r))[best_r_index])
 
+        '''
         cv.circle(img, (best_x_index, best_y_index), best_radius, 100)
-        cv.imshow("img", img)
-        cv.waitKey(30)
+        cv.imshow("imgz", img)
+        cv.waitKey()
+        '''
+
+        return (1, best_x_index, best_y_index, best_radius)
     else:
-        print("No votes received.")
+        print("No cylindrical obstacles detected.")
+        return (0, 0.0, 0.0, 0.0)
 
 
-def callback(data):
-    img_data = np.array(data.data, dtype=np.uint8)
-    img = np.reshape(img_data, (data.height, data.width))
+def handle_cylindrical_obstacles(req):
+    global img
 
-    img[img > 0] = 255
+    success, x_center, y_center, radius = hough_circles(img)
+    map_pixels_per_meter = rospy.get_param('/eva/mapPixelsPerMeter')
 
-    hough_circles(img)
+    if success:
+        lat_center = (x_center + 0.0)/map_pixels_per_meter
+        lng_center = (img.shape[0] - y_center + 0.0)/map_pixels_per_meter
+        radius = (radius + 0.0)/map_pixels_per_meter
+
+        return ReportCylindricalObstacleResponse(1, lat_center, lng_center, radius)
+    else:
+        return ReportCylindricalObstacleResponse(0, 0.0, 0.0, 0.0)
 
 
-def listener():
+def cylindrical_obstacles_server():
     rospy.init_node('cylindrical_obstacles', anonymous=True)
-
     rospy.Subscriber('/eva/scan_mismatches',
                      ScanMismatches, callback, queue_size=1)
 
-    # spin() simply keeps python from exiting until this node is stopped
+    s = rospy.Service('/eva/cylindrical_obstacles',
+                      ReportCylindricalObstacle, handle_cylindrical_obstacles)
     rospy.spin()
 
 
-if __name__ == '__main__':
-    listener()
+if __name__ == "__main__":
+    cylindrical_obstacles_server()

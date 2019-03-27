@@ -1,0 +1,7 @@
+# This service reports the position and size of the most apparent cylincdrical obstacle found.
+
+---
+uint8 success
+float64 latCenter
+float64 lngCenter
+float64 radius

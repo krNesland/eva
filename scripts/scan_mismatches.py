@@ -10,6 +10,7 @@ import rospy
 import numpy as np
 import tf
 import math
+import cv2 as cv
 
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import OccupancyGrid
@@ -20,9 +21,58 @@ from eva_a.msg import *
 
 # Current pose of the robot (x, y, theta).
 now_pose = [0.0, 0.0, 0.0]
+map_data = np.zeros((500, 500), dtype=np.uint8)
 # The occupancy grid. Just a random size for initialization.
-map_data = np.zeros((500, 500), dtype=np.int8)
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
+
+# Loading the map ans setting some parameters
+def map_callback(data):
+    global map_data
+    global now_pose
+
+    try:
+        map_width=data.info.width
+        map_height=data.info.height
+        resolution=data.info.resolution
+
+        rospy.set_param('/eva/mapWidth', map_width)
+        rospy.set_param('/eva/mapHeight', map_height)
+        rospy.set_param('/eva/mapPixelsPerMeter', 1.0/resolution)
+
+        map_height=rospy.get_param('/eva/mapHeight')
+        map_width=rospy.get_param('/eva/mapWidth')
+    except:
+        print("Unable to load map info.")
+        return
+
+    img=np.reshape(data.data, (map_height, map_width)).astype(np.int8)
+
+    # The map is created with a 200 px margin down and to the left.
+    y_crop = map_height - 200
+    x_crop = 200
+
+    img=img[:(map_height - y_crop), x_crop:]
+
+    #img=np.flipud(img)
+    #img = np.rot90(img)
+
+    map_data=img
+
+    # Update pose.
+    tf_listener=tf.TransformListener()
+
+    while not rospy.is_shutdown():
+        try:
+            (trans, rot)=tf_listener.lookupTransform(
+                '/map', '/base_footprint', rospy.Time(0))
+            now_pose[0]=trans[0]
+            now_pose[1]=trans[1]
+            # Quaternion to theta angle.
+            now_pose[2]=math.atan2(
+                2*(rot[0]*rot[1] + rot[2]*rot[3]), 1 - 2*(rot[1]*rot[1] + rot[2]*rot[2]))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
 
 # Comparing scan to map.
 def scan_callback(data):
@@ -30,8 +80,8 @@ def scan_callback(data):
     rospy.sleep(2)
 
     try:
-        map_height = int(rospy.get_param('/eva/mapHeight'))
-        map_width = int(rospy.get_param('/eva/mapHeight'))
+        map_height = 200
+        map_width = int(rospy.get_param('/eva/mapWidth') - 200)
         map_pixels_per_meter = int(rospy.get_param('/eva/mapPixelsPerMeter'))
     except:
         print("Unable to load map parameters.")
@@ -48,6 +98,10 @@ def scan_callback(data):
     global now_pose
     global map_data
     global pub
+
+    cv.imshow("myWindow", map_data)
+    cv.waitKey(3)
+
     short_data = np.zeros((map_height, map_width), dtype = np.int8)
 
     max_range=data.range_max
@@ -69,9 +123,8 @@ def scan_callback(data):
         # Length of the corresponding scan ray.
         scan_range=data.ranges[i]
 
-        # Not exactly sure why 200 and 184. 184 = 384 - 200.
-        image_x=int(math.floor(map_pixels_per_meter*robot_x + 200))
-        image_y=int(math.floor(-map_pixels_per_meter*robot_y + map_height - 200))
+        image_x=int(math.floor(map_pixels_per_meter*robot_x))
+        image_y=int(math.floor(map_pixels_per_meter*robot_y + map_height))
 
         image_theta=robot_theta + angle
 
@@ -79,10 +132,8 @@ def scan_callback(data):
         # Positive direction is opposite in image relative to map.
 
         # Want the angles to be [-pi, pi].
-        if image_theta < math.pi:
-            image_theta=-image_theta
-        else:
-            image_theta=2*math.pi - image_theta
+        if image_theta > math.pi:
+            image_theta= image_theta - 2*math.pi 
 
         # dy/dx (slope of the line).
         slope=math.tan(image_theta)
@@ -158,52 +209,12 @@ def scan_callback(data):
 
     # If there was detected any possible mismatches. Sending a message with these mismatches.
     if np.any(short_data):
-        short_msg=ShortData()
+        short_msg=ScanMismatches()
         short_msg.header.frame_id='opencv'
         short_msg.height=map_height
         short_msg.width=map_width
         short_msg.data=(short_data.flatten()).tolist()
         pub.publish(short_msg)
-
-
-# Loading the map ans setting some parameters
-def map_callback(data):
-    global map_data
-    global now_pose
-
-    try:
-        map_width=data.info.width
-        map_height=data.info.height
-        resolution=data.info.resolution
-
-        rospy.set_param('/eva/mapWidth', map_width)
-        rospy.set_param('/eva/mapHeight', map_height)
-        rospy.set_param('/eva/mapPixelsPerMeter', 1.0/resolution)
-
-        map_height=rospy.get_param('/eva/mapHeight')
-        map_width=rospy.get_param('/eva/mapWidth')
-    except:
-        print("Unable to load map info.")
-        return
-
-    img=np.reshape(data.data, (map_height, map_width)).astype(np.int8)
-    img=np.flipud(img)
-    map_data=img
-
-    # Update pose.
-    tf_listener=tf.TransformListener()
-
-    while not rospy.is_shutdown():
-        try:
-            (trans, rot)=tf_listener.lookupTransform(
-                '/map', '/base_footprint', rospy.Time(0))
-            now_pose[0]=trans[0]
-            now_pose[1]=trans[1]
-            # Quaternion to theta angle.
-            now_pose[2]=math.atan2(
-                2*(rot[0]*rot[1] + rot[2]*rot[3]), 1 - 2*(rot[1]*rot[1] + rot[2]*rot[2]))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
 
 
 def listener():
