@@ -15,25 +15,31 @@
 
 <body>
 
-    <nav>
-        <div class="nav-wrapper">
-            <a href="../index.html" class="brand-logo center">Peon</a>
-            <ul class="left hide-on-med-and-down">
-                <li class="active"><a href="#!">Mode 1</a></li>
-                <li><a href="mode2.html">Mode 2</a></li>
-                <li><a href="mode3.html">Mode 3</a></li>
-            </ul>
-        </div>
-    </nav>
+    <div class="navbar-fixed">
+        <nav>
+            <div class="nav-wrapper light-blue accent-3">
+                <a href="../index.html" class="brand-logo">Peon</a>
+                <ul class="right hide-on-med-and-down">
+                    <li class="active"><a href="#!">Mode 1</a></li>
+                    <li><a href="mode2.html">Mode 2</a></li>
+                    <li><a href="mode3.html">Mode 3</a></li>
+                    <li><i class="material-icons" id ="connection-symbol">wifi</i></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
 
     <div class="section white">
         <div class="row container">
             <h2 class="header">Mode 1</h2>
-            <p class="grey-text text-darken-3 lighten-3">Adjust speed with the slider and control the robot with the arrow keys.</p>
+            <p class="grey-text text-darken-3 lighten-3">Adjust speed with the slider and control the robot with the
+                arrow keys.</p>
         </div>
 
         <div class="row container">
-            <img src="http://localhost:8080/stream?topic=/camera/rgb/image_raw">
+            <div class="col m6">
+                <img src="http://localhost:8080/stream?topic=/camera/rgb/image_raw">
+            </div>
         </div>
 
         <div class="row container">
