@@ -68,7 +68,7 @@ def hough_circles(img):
                     old_centers.append((b, a))
 
     # If enough votes have beed gathered.
-    if not np.max(acc) < 5:
+    if not np.max(acc) < 8:
         # Index of the max in a flattened version of the array.
         best_index = int(np.argmax(acc))
 
@@ -86,6 +86,7 @@ def hough_circles(img):
         cv.imshow("imgz", img)
         cv.waitKey()
         '''
+        
 
         return (1, best_x_index, best_y_index, best_radius)
     else:

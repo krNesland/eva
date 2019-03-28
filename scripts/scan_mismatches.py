@@ -53,9 +53,6 @@ def map_callback(data):
 
     img=img[:(map_height - y_crop), x_crop:]
 
-    #img=np.flipud(img)
-    #img = np.rot90(img)
-
     map_data=img
 
     # Update pose.
@@ -98,9 +95,6 @@ def scan_callback(data):
     global now_pose
     global map_data
     global pub
-
-    cv.imshow("myWindow", map_data)
-    cv.waitKey(3)
 
     short_data = np.zeros((map_height, map_width), dtype = np.int8)
 
