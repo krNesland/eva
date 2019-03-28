@@ -25,6 +25,8 @@ map_data = np.zeros((500, 500), dtype=np.uint8)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
+#Heisann
+
 # Loading the map ans setting some parameters
 def map_callback(data):
     global map_data
