@@ -23,6 +23,7 @@ from eva_a.msg import *
 now_pose = [0.0, 0.0, 0.0]
 map_data = np.zeros((500, 500), dtype=np.uint8)
 obstacle_map = np.zeros((200, 200), dtype = np.float64)
+visualizer = np.zeros((200, 200), dtype=np.float64)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
@@ -33,6 +34,7 @@ def map_callback(data):
     global map_data
     global now_pose
     global obstacle_map
+    global visualizer
 
     try:
         map_width=data.info.width
@@ -59,6 +61,7 @@ def map_callback(data):
 
     map_data=img
     obstacle_map = np.zeros(img.shape, dtype = np.float64)
+    visualizer = np.zeros(img.shape, dtype=np.float64)
 
     # Update pose.
     tf_listener=tf.TransformListener()
@@ -78,6 +81,9 @@ def map_callback(data):
 
 # Comparing scan to map.
 def scan_callback(data):
+    # Wait for the correct pose to be set.
+    rospy.sleep(2)
+
     try:
         map_height = 200
         map_width = int(rospy.get_param('/eva/mapWidth') - 200)
@@ -98,15 +104,19 @@ def scan_callback(data):
     global map_data
     global pub
     global obstacle_map
+    global visualizer
 
     # Probability of obstacle if hit, but not on map.
-    prob_hit_nmap = 0.9
+    prob_hit_nmap = 0.95
     # Probability of obstacle if hit and on map.
-    prob_hit_map = 0.1
+    prob_hit_map = 0.01
     # Probability of obstacle if not hit and not on map.
     prob_nhit_nmap = 0.45
     # Probability of obstacle if not hit and on map.
     prob_nhit_map = 0.01
+
+    prob_hit = 0.8
+    prob_nhit = 0.4
 
     max_range=data.range_max
     min_range=data.range_min
@@ -178,21 +188,33 @@ def scan_callback(data):
                 map_range=math.sqrt(
                     (x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))/map_pixels_per_meter
 
-                if map_range > scan_range:
-                    if map_data[y][x] > 50:
+                '''
+                # Do not want to continue following a ray long after it should have hit something.
+                if map_range > scan_range + 0.1:
+                    break
+
+                # If map is occupied.
+                if map_data[y][x] > 50:
+                    # If scan hits at approximately this position.
+                    if abs(map_range - scan_range) < 0.1:
                         update = math.log10(prob_hit_map/(1 - prob_hit_map))
                     else:
-                        update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
-
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
-                    break
-                else:
-                    if map_data[y][x] > 50:
                         update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
+                else:
+                    # If scan hits at approximately this position.
+                    if abs(map_range - scan_range) < 0.1:
+                        update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
                     else:
                         update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
 
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
+                obstacle_map[y][x] = obstacle_map[y][x] + update
+                '''
+
+                if map_range > scan_range:
+                    visualizer[y][x] = visualizer[y][x] + math.log10(prob_hit/(1 - prob_hit))
+                    break
+                else:
+                    visualizer[y][x] = visualizer[y][x] + math.log10(prob_nhit/(1 - prob_nhit))
 
                 x=x + inc
                 y=image_y + int(round(slope*(x - image_x)))
@@ -200,33 +222,46 @@ def scan_callback(data):
             while x < map_width and x >= 0 and y < map_height and y >= 0:
                 map_range=math.sqrt((x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))/map_pixels_per_meter
 
-                if map_range > scan_range:
-                    if map_data[y][x] > 50:
+                '''
+                # Do not want to continue following a ray long after it should have hit something.
+                if map_range > scan_range + 0.1:
+                    break
+
+                # If map is occupied.
+                if map_data[y][x] > 50:
+                    # If scan hits at approximately this position.
+                    if abs(map_range - scan_range) < 0.2:
                         update = math.log10(prob_hit_map/(1 - prob_hit_map))
                     else:
-                        update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
-
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
-                    break
-                else:
-                    if map_data[y][x] > 50:
                         update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
+                else:
+                    # If scan hits at approximately this position.
+                    if abs(map_range - scan_range) < 0.2:
+                        update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
                     else:
                         update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
 
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
+                obstacle_map[y][x] = obstacle_map[y][x] + update
+                '''
+
+                if map_range > scan_range:
+                    visualizer[y][x] = visualizer[y][x] + math.log10(prob_hit/(1 - prob_hit))
+                    break
+                else:
+                    visualizer[y][x] = visualizer[y][x] + math.log10(prob_nhit/(1 - prob_nhit))
 
                 y=y + inc
                 x=image_x + int(round((y - image_y)/slope))
 
+    print(np.min(obstacle_map))
+    
+    #visualizer = np.rot90(np.flipud(visualizer))
+    obstacle_map[obstacle_map < -10] = -10
 
+    visualizer[visualizer < -10] = -10
 
-    obstacle_map[obstacle_map < -5] = -2
-    obstacle_map[obstacle_map > 5] = 2
-
-    print(np.max(obstacle_map))
-
-    cv.imshow("myWin", (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map)))
+    #cv.imshow("myWin", (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map)))
+    cv.imshow("viz", (visualizer - np.min(visualizer))/(np.max(visualizer) - np.min(visualizer)))
     cv.waitKey(30)
 
     '''
