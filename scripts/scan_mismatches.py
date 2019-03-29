@@ -26,7 +26,30 @@ obstacle_map = np.zeros((200, 200), dtype = np.float64)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
-#Heisann
+
+def map_feature_nearby(x, y, map, region_size):
+    left = x - region_size
+    if left < 0:
+        left = 0
+
+    right = x + region_size
+    if right > map.shape[1]:
+        right = map.shape[1]
+
+    top = y - region_size
+    if top < 0:
+        top = 0
+
+    bottom = y + region_size
+    if bottom > map.shape[0]:
+        bottom = map.shape[0]
+
+    region = map[top:bottom, left:right]
+
+    if np.any(region > 50):
+        return True
+    else:
+        return False
 
 # Loading the map ans setting some parameters
 def map_callback(data):
@@ -179,7 +202,7 @@ def scan_callback(data):
                     (x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))/map_pixels_per_meter
 
                 if map_range > scan_range:
-                    if map_data[y][x] > 50:
+                    if map_feature_nearby(x, y, map_data, 5):
                         update = math.log10(prob_hit_map/(1 - prob_hit_map))
                     else:
                         update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
@@ -187,7 +210,7 @@ def scan_callback(data):
                     obstacle_map[y][x] = obstacle_map[y][x] + update
                     break
                 else:
-                    if map_data[y][x] > 50:
+                    if map_feature_nearby(x, y, map_data, 5):
                         update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
                     else:
                         update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
@@ -201,7 +224,7 @@ def scan_callback(data):
                 map_range=math.sqrt((x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))/map_pixels_per_meter
 
                 if map_range > scan_range:
-                    if map_data[y][x] > 50:
+                    if map_feature_nearby(x, y, map_data, 5):
                         update = math.log10(prob_hit_map/(1 - prob_hit_map))
                     else:
                         update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
@@ -209,7 +232,7 @@ def scan_callback(data):
                     obstacle_map[y][x] = obstacle_map[y][x] + update
                     break
                 else:
-                    if map_data[y][x] > 50:
+                    if map_feature_nearby(x, y, map_data, 5):
                         update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
                     else:
                         update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
