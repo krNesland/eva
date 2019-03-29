@@ -21,10 +21,16 @@ from eva_a.msg import *
 
 # Current pose of the robot (x, y, theta).
 now_pose = [0.0, 0.0, 0.0]
-map_data = np.zeros((500, 500), dtype=np.uint8)
-obstacle_map = np.zeros((200, 200), dtype = np.float64)
+map_data = np.zeros((384, 384), dtype=np.int8)
+obstacle_map = np.zeros((384, 384), dtype = np.float64)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
+
+def map_to_img(x_map, y_map):
+    x_image = int(round(20*x_map + 200))
+    y_image = int(round(-20*y_map + 184))
+
+    return (x_image, y_image)
 
 
 def map_feature_nearby(x, y, map, region_size):
@@ -57,31 +63,7 @@ def map_callback(data):
     global now_pose
     global obstacle_map
 
-    try:
-        map_width=data.info.width
-        map_height=data.info.height
-        resolution=data.info.resolution
-
-        rospy.set_param('/eva/mapWidth', map_width)
-        rospy.set_param('/eva/mapHeight', map_height)
-        rospy.set_param('/eva/mapPixelsPerMeter', 1.0/resolution)
-
-        map_height=rospy.get_param('/eva/mapHeight')
-        map_width=rospy.get_param('/eva/mapWidth')
-    except:
-        print("Unable to load map info.")
-        return
-
-    img=np.reshape(data.data, (map_height, map_width)).astype(np.int8)
-
-    # The map is created with a 200 px margin down and to the left.
-    y_crop = map_height - 200
-    x_crop = 200
-
-    img=img[:(map_height - y_crop), x_crop:]
-
-    map_data=img
-    obstacle_map = np.zeros(img.shape, dtype = np.float64)
+    map_data=np.reshape(data.data, (384, 384)).astype(np.int8)
 
     # Update pose.
     tf_listener=tf.TransformListener()
@@ -101,21 +83,13 @@ def map_callback(data):
 
 # Comparing scan to map.
 def scan_callback(data):
-    try:
-        map_height = 200
-        map_width = int(rospy.get_param('/eva/mapWidth') - 200)
-        map_pixels_per_meter = int(rospy.get_param('/eva/mapPixelsPerMeter'))
-    except:
-        print("Unable to load map parameters.")
-        return
+    map_height = 384
+    map_width = 384
+    resolution = 0.05
 
-    try:
-        # How much shorter a reading should be compared to the expected to be considered a possible obstacle.
-        scan_ray_distance_threshold = rospy.get_param(
-            '/eva/scanRayDistanceThreshold')
-    except:
-        scan_ray_distance_threshold = 0.3
-        print("Scan ray distance threshold defaulting to 0.3 m.")
+    collision_region = 3
+
+    visualizer = np.zeros((384, 384), np.uint8)
 
     global now_pose
     global map_data
@@ -127,7 +101,7 @@ def scan_callback(data):
     # Probability of obstacle if hit and on map.
     prob_hit_map = 0.1
     # Probability of obstacle if not hit and not on map.
-    prob_nhit_nmap = 0.45
+    prob_nhit_nmap = 0.3
     # Probability of obstacle if not hit and on map.
     prob_nhit_map = 0.01
 
@@ -142,25 +116,30 @@ def scan_callback(data):
     robot_x=now_pose[0]
     robot_y=now_pose[1]
 
+    image_x, image_y = map_to_img(robot_x, robot_y)
+
     print("New scan received.")
+    print((robot_x, robot_y))
 
     # Angle is the angle of the ray relative to the robot. Looping through all.
     for i, angle in enumerate(np.arange(angle_min, angle_max, angle_inc, dtype=np.float32)):
 
+        #cv.imshow("cscsd", np.rot90(visualizer))
+        #cv.waitKey(30)
+        #rospy.sleep(0.02)
+
         # Length of the corresponding scan ray.
         scan_range=data.ranges[i]
 
-        image_x=int(math.floor(map_pixels_per_meter*robot_x))
-        image_y=int(math.floor(map_pixels_per_meter*robot_y + map_height))
-
-        image_theta=robot_theta + angle
+        image_theta= -(robot_theta + angle)
 
         # Line rasterization algorithm 1
-        # Positive direction is opposite in image relative to map.
 
         # Want the angles to be [-pi, pi].
         if image_theta > math.pi:
-            image_theta= image_theta - 2*math.pi 
+            image_theta = image_theta - 2*math.pi
+        elif image_theta < -math.pi:
+            image_theta = 2*math.pi + image_theta
 
         # dy/dx (slope of the line).
         slope=math.tan(image_theta)
@@ -196,60 +175,52 @@ def scan_callback(data):
             x_axis=True
 
         # Tracing until border of map.
-        if x_axis:
-            while x < map_width and x >= 0 and y < map_height and y >= 0:
-                map_range=math.sqrt(
-                    (x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))/map_pixels_per_meter
+        while x < map_width and x >= 0 and y < map_height and y >= 0:
+            map_range=math.sqrt(
+                (x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))*resolution
 
-                if map_range > scan_range:
-                    if map_feature_nearby(x, y, map_data, 5):
-                        update = math.log10(prob_hit_map/(1 - prob_hit_map))
-                    else:
-                        update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
+            if map_range > max_range:
+                break
 
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
-                    break
+            visualizer[y][x] = 180
+
+            # If the laser scan stops earlier than expected from the map.
+            if map_range > (scan_range + collision_region*resolution):
+                # If there are cells nearby that are occupied on the map.
+                if map_feature_nearby(x, y, map_data, collision_region):
+                    update = math.log10(prob_hit_map/(1 - prob_hit_map))
                 else:
-                    if map_feature_nearby(x, y, map_data, 5):
-                        update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
-                    else:
-                        update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
+                    update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
 
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
+                obstacle_map[y][x] = obstacle_map[y][x] + update
+                
+                break
+            else:
+                if map_feature_nearby(x, y, map_data, collision_region):
+                    update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
+                else:
+                    update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
 
+                obstacle_map[y][x] = obstacle_map[y][x] + update
+
+            if x_axis:
                 x=x + inc
                 y=image_y + int(round(slope*(x - image_x)))
-        else:
-            while x < map_width and x >= 0 and y < map_height and y >= 0:
-                map_range=math.sqrt((x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))/map_pixels_per_meter
-
-                if map_range > scan_range:
-                    if map_feature_nearby(x, y, map_data, 5):
-                        update = math.log10(prob_hit_map/(1 - prob_hit_map))
-                    else:
-                        update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
-
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
-                    break
-                else:
-                    if map_feature_nearby(x, y, map_data, 5):
-                        update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
-                    else:
-                        update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
-
-                    obstacle_map[y][x] = obstacle_map[y][x] + update
-
+            else:
                 y=y + inc
                 x=image_x + int(round((y - image_y)/slope))
 
 
 
-    obstacle_map[obstacle_map < -5] = -2
-    obstacle_map[obstacle_map > 5] = 2
+    obstacle_map[obstacle_map < -2] = -2
+    obstacle_map[obstacle_map > 2] = 2
 
-    print(np.max(obstacle_map))
+    #print(np.max(obstacle_map))
 
-    cv.imshow("myWin", (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map)))
+    visualizer = (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map))
+    visualizer = np.rot90(visualizer)
+
+    cv.imshow("vizz", visualizer)
     cv.waitKey(30)
 
     '''
@@ -268,6 +239,7 @@ def listener():
     rospy.init_node('scan_mismatches', anonymous = True)
 
     rospy.Subscriber('/map', OccupancyGrid, map_callback)
+    rospy.sleep(1)
     rospy.Subscriber('/scan', LaserScan, scan_callback, queue_size = 1)
 
     # spin() simply keeps python from exiting until this node is stopped
