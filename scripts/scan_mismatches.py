@@ -11,6 +11,7 @@ import numpy as np
 import tf
 import math
 import cv2 as cv
+import matplotlib.pyplot as plt
 
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import OccupancyGrid
@@ -63,7 +64,8 @@ def map_callback(data):
     global now_pose
     global obstacle_map
 
-    map_data=np.reshape(data.data, (384, 384)).astype(np.int8)
+    # Making it equal to how the .pgm file looks.
+    map_data=np.flipud(np.reshape(data.data, (384, 384)).astype(np.int8))
 
     # Update pose.
     tf_listener=tf.TransformListener()
@@ -87,7 +89,7 @@ def scan_callback(data):
     map_width = 384
     resolution = 0.05
 
-    collision_region = 3
+    collision_region = 2
 
     visualizer = np.zeros((384, 384), np.uint8)
 
@@ -123,10 +125,6 @@ def scan_callback(data):
 
     # Angle is the angle of the ray relative to the robot. Looping through all.
     for i, angle in enumerate(np.arange(angle_min, angle_max, angle_inc, dtype=np.float32)):
-
-        #cv.imshow("cscsd", np.rot90(visualizer))
-        #cv.waitKey(30)
-        #rospy.sleep(0.02)
 
         # Length of the corresponding scan ray.
         scan_range=data.ranges[i]
@@ -185,7 +183,7 @@ def scan_callback(data):
             visualizer[y][x] = 180
 
             # If the laser scan stops earlier than expected from the map.
-            if map_range > (scan_range + collision_region*resolution):
+            if map_range > scan_range:
                 # If there are cells nearby that are occupied on the map.
                 if map_feature_nearby(x, y, map_data, collision_region):
                     update = math.log10(prob_hit_map/(1 - prob_hit_map))
@@ -209,13 +207,12 @@ def scan_callback(data):
             else:
                 y=y + inc
                 x=image_x + int(round((y - image_y)/slope))
+        
 
 
 
     obstacle_map[obstacle_map < -2] = -2
     obstacle_map[obstacle_map > 2] = 2
-
-    #print(np.max(obstacle_map))
 
     visualizer = (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map))
     visualizer = np.rot90(visualizer)
