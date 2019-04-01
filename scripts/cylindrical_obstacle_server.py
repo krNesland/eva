@@ -15,39 +15,39 @@ from eva_a.srv import *
 
 # Could have had the (x, y)-dimensions of the accumulator in a different size than the image.
 
-img = np.zeros((500, 500), dtype=np.uint8)
+obstacle_map = np.zeros((384, 384), dtype=np.float32)
 
 def callback(data):
-    global img
-    img_data = np.array(data.data, dtype=np.uint8)
-    img = np.reshape(img_data, (data.height, data.width))
-
-    img[img > 0] = 255
+    global obstacle_map
+    obstacle_data = np.array(data.data, dtype=np.float32)
+    obstacle_map = np.reshape(obstacle_data, (data.height, data.width))
 
 
-def hough_circles(img):
+def hough_circles(obstacle_map):
     try:
-        map_pixels_per_meter = rospy.get_param('/eva/mapPixelsPerMeter')
-        max_r = rospy.get_param('/eva/maxCircleRadii')*map_pixels_per_meter
-        min_r = rospy.get_param('/eva/minCircleRadii')*map_pixels_per_meter
+        resolution = 0.05
+        max_r = rospy.get_param('/eva/maxCircleRadii')/resolution
+        min_r = rospy.get_param('/eva/minCircleRadii')/resolution
     except:
         print("Unable to load circle limits, defaulting to 0.1 and 0.5.")
-        map_pixels_per_meter = 20
-        max_r = 0.5*mapPixelsPerMeter
-        min_r = 0.1*mapPixelsPerMeter
+        resolution = 0.05
+        max_r = 0.5/resolution
+        min_r = 0.1/resolution
 
     # The number of different radii that are searched for.
     num_r = 8
     # Same shape of accumulator as image (except in the radius dimension).
-    num_y, num_x = img.shape
+    num_y, num_x = obstacle_map.shape
     # The number of votes per pixel and radius.
     num_theta = 360/10
 
     # The positions where there are pixels that should vote.
-    non_zero_row, non_zero_col = np.nonzero(img)
+    non_zero_row, non_zero_col = np.nonzero(obstacle_map > 0.5)
 
     # The accumulator where the votes are stored.
-    acc = np.zeros((num_y, num_x, num_r), dtype=np.float)
+    acc = np.zeros((num_y, num_x, num_r), dtype=np.float32)
+
+    print(non_zero_row.shape)
 
     # Voting, (x - a)^2 + (y - b)^2 = r^2.
     for r_counter, r in enumerate(np.linspace(min_r, max_r, num_r)):
@@ -63,12 +63,13 @@ def hough_circles(img):
                 if not (b, a) in old_centers:
                     # Only considering circles with center inside the image.
                     if a >= 0 and a < num_x and b >= 0 and b < num_y:
-                        acc[b][a][r_counter] = acc[b][a][r_counter] + 1
+                        acc[b][a][r_counter] = acc[b][a][r_counter] + obstacle_map[y][x]
 
                     old_centers.append((b, a))
 
+
     # If enough votes have beed gathered.
-    if not np.max(acc) < 8:
+    if np.max(acc) > 8:
         # Index of the max in a flattened version of the array.
         best_index = int(np.argmax(acc))
 
@@ -82,8 +83,8 @@ def hough_circles(img):
         best_radius = int((np.linspace(min_r, max_r, num_r))[best_r_index])
 
         '''
-        cv.circle(img, (best_x_index, best_y_index), best_radius, 100)
-        cv.imshow("imgz", img)
+        cv.circle(obstacle_map, (best_x_index, best_y_index), best_radius, 100)
+        cv.imshow("imgz", obstacle_map)
         cv.waitKey()
         '''
         
@@ -95,15 +96,19 @@ def hough_circles(img):
 
 
 def handle_cylindrical_obstacles(req):
-    global img
+    global obstacle_map
 
-    success, x_center, y_center, radius = hough_circles(img)
-    map_pixels_per_meter = rospy.get_param('/eva/mapPixelsPerMeter')
+    print("Request obtained.")
+
+    success, x_center, y_center, radius = hough_circles(obstacle_map)
+    resolution = 0.05
 
     if success:
-        lat_center = (x_center + 0.0)/map_pixels_per_meter
-        lng_center = (img.shape[0] - y_center + 0.0)/map_pixels_per_meter
-        radius = (radius + 0.0)/map_pixels_per_meter
+        lat_center = (x_center - 200)*resolution
+        lng_center = (y_center - 184)*resolution
+        radius = radius*resolution
+
+        print((lat_center, lng_center, radius))
 
         return ReportCylindricalObstacleResponse(1, lat_center, lng_center, radius)
     else:

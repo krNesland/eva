@@ -15,4 +15,4 @@ Header header        # Header timestamp should be acquisition time of image
 uint32 height         # image height, that is, number of rows
 uint32 width          # image width, that is, number of columns
 
-int8[] data          # actual matrix data
+float32[] data          # actual matrix data

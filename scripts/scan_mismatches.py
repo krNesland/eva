@@ -23,7 +23,7 @@ from eva_a.msg import *
 # Current pose of the robot (x, y, theta).
 now_pose = [0.0, 0.0, 0.0]
 map_data = np.zeros((384, 384), dtype=np.int8)
-obstacle_map = np.zeros((384, 384), dtype = np.float64)
+obstacle_map = np.zeros((384, 384), dtype = np.float32)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
@@ -89,7 +89,7 @@ def scan_callback(data):
     map_width = 384
     resolution = 0.05
 
-    collision_region = 2
+    collision_region = 4
 
     visualizer = np.zeros((384, 384), np.uint8)
 
@@ -180,8 +180,6 @@ def scan_callback(data):
             if map_range > max_range:
                 break
 
-            visualizer[y][x] = 180
-
             # If the laser scan stops earlier than expected from the map.
             if map_range > scan_range:
                 # If there are cells nearby that are occupied on the map.
@@ -220,16 +218,14 @@ def scan_callback(data):
     cv.imshow("vizz", visualizer)
     cv.waitKey(30)
 
-    '''
     # If there was detected any possible mismatches. Sending a message with these mismatches.
-    if np.any(short_data):
-        short_msg=ScanMismatches()
-        short_msg.header.frame_id='opencv'
-        short_msg.height=map_height
-        short_msg.width=map_width
-        short_msg.data=(short_data.flatten()).tolist()
-        pub.publish(short_msg)
-    '''
+    if np.any(obstacle_map):
+        mismatch_msg=ScanMismatches()
+        mismatch_msg.header.frame_id='opencv'
+        mismatch_msg.height=map_height
+        mismatch_msg.width=map_width
+        mismatch_msg.data=(obstacle_map.flatten()).tolist()
+        pub.publish(mismatch_msg)
 
 
 def listener():
