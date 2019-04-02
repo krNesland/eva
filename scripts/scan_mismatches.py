@@ -22,8 +22,8 @@ from eva_a.msg import *
 
 # Current pose of the robot (x, y, theta).
 now_pose = [0.0, 0.0, 0.0]
-map_data = np.zeros((384, 384), dtype=np.int8)
-obstacle_map = np.zeros((384, 384), dtype = np.float32)
+map_data = np.zeros((map_height, map_width), dtype=np.int8)
+obstacle_map = np.zeros((map_height, map_width), dtype = np.float32)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
@@ -64,8 +64,18 @@ def map_callback(data):
     global now_pose
     global obstacle_map
 
+    try:
+        map_width = rospy.get_param('mapWidth')
+        map_height = rospy.get_param('mapHeight')
+        resolution = rospy.get_param('resolution')
+    except:
+        print("Unable to load map parameters.")
+        map_width = 384
+        map_height = 384
+        resolution = 0.05
+
     # Making it equal to how the .pgm file looks.
-    map_data=np.flipud(np.reshape(data.data, (384, 384)).astype(np.int8))
+    map_data=np.flipud(np.reshape(data.data, (map_height, map_width)).astype(np.int8))
 
     # Update pose.
     tf_listener=tf.TransformListener()
@@ -85,13 +95,19 @@ def map_callback(data):
 
 # Comparing scan to map.
 def scan_callback(data):
-    map_height = 384
-    map_width = 384
-    resolution = 0.05
+    try:
+        map_width = rospy.get_param('mapWidth')
+        map_height = rospy.get_param('mapHeight')
+        resolution = rospy.get_param('resolution')
+    except:
+        print("Unable to load map parameters.")
+        map_width = 384
+        map_height = 384
+        resolution = 0.05
 
     collision_region = 4
 
-    visualizer = np.zeros((384, 384), np.uint8)
+    visualizer = np.zeros((map_height, map_width), np.uint8)
 
     global now_pose
     global map_data

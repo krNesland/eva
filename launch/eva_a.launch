@@ -5,7 +5,7 @@
 
     <param name="/eva/mapWidth" value="384" />
     <param name="/eva/mapHeight" value="384" />
-    <param name="/eva/mapPixelsPerMeter" value="20" />
+    <param name="/eva/resolution" value="0.05" />
 
     <param name="/eva/scanRayDistanceThreshold" value="0.3" />
 

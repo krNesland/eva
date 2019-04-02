@@ -25,11 +25,11 @@ def callback(data):
 
 def hough_circles(obstacle_map):
     try:
-        resolution = 0.05
+        resolution = rospy.get_param('resolution')
         max_r = rospy.get_param('/eva/maxCircleRadii')/resolution
         min_r = rospy.get_param('/eva/minCircleRadii')/resolution
     except:
-        print("Unable to load circle limits, defaulting to 0.1 and 0.5.")
+        print("Unable to load Hough circle parameters.")
         resolution = 0.05
         max_r = 0.5/resolution
         min_r = 0.1/resolution
@@ -101,7 +101,12 @@ def handle_cylindrical_obstacles(req):
     print("Request obtained.")
 
     success, x_center, y_center, radius = hough_circles(obstacle_map)
-    resolution = 0.05
+
+    try:
+        resolution = rospy.get_param('resolution')
+    except:
+        print("Unable to load resolution parameter.")
+        resolution = 0.05
 
     if success:
         lat_center = (x_center - 200)*resolution
