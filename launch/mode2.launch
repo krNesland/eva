@@ -1,0 +1,12 @@
+<launch>
+
+    <include file="$(find eva_a)/launch/turtlebot3_eva_b.launch"/>
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+    <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+	  <arg name="map_file" value="$(find eva_a)/map/map.yaml" />
+    </include>
+
+    <node pkg="tf2_web_republisher" name="tf2_web_republisher" type="tf2_web_republisher"/>
+    <node pkg="eva_a" name="gas_level" type="gas_level_publisher.py"/>
+    
+</launch>

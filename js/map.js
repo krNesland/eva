@@ -12,7 +12,7 @@ var corner1 = L.latLng(6.0, 0.0);
 var corner2 = L.latLng(0.0, 5.0);
 var bounds = L.latLngBounds(corner1, corner2);
 
-var image = L.imageOverlay('img/map.png', bounds).addTo(map);
+var image = L.imageOverlay('../img/map.png', bounds).addTo(map);
 
 map.fitBounds(bounds);
 

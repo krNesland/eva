@@ -8,32 +8,29 @@ var tfClient = new ROSLIB.TFClient({
 console.log('Waiting for transforms.');
 /*
 A simpler marker.
-var currMarker = L.circleMarker([1.5, 1.5], {
+var robotMarker = L.circleMarker([1.5, 1.5], {
     color: 'black',
     fillColor: '#777'
 }).addTo(map);
 */
 
 
-var taurobIcon = L.icon({
-    iconUrl: 'img/taurob_marker.png',
-    shadowUrl: 'img/taurob_marker_shadow.png',
+var robotIcon = L.icon({
+    iconUrl: '../img/taurob_marker.png',
+    shadowUrl: '../img/taurob_marker_shadow.png',
 
-    iconSize:     [30, 29], // size of the icon
-    shadowSize:   [32, 31], // size of the shadow
-    iconAnchor:   [15, 15], // point of the icon which will correspond to marker's location
-    shadowAnchor: [15, 15],  // the same for the shadow
+    iconSize:     [20, 19], // size of the icon
+    shadowSize:   [22, 21], // size of the shadow
+    iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
+    shadowAnchor: [11, 11],  // the same for the shadow
     popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 });
 
-L.marker([1.5, 1.5], {icon: taurobIcon}).addTo(map);
+var robotMarker = L.marker([1.5, 1.5], {icon: robotIcon}).addTo(map);
 
 tfClient.subscribe('base_footprint', function(tf) {
-    currMarker.setLatLng(L.latLng(tf.translation.x, -tf.translation.y));
+    robotMarker.setLatLng(L.latLng(tf.translation.x, -tf.translation.y));
 });
-
-// Subscribing to a Topic (for visualizing the current goal).
-// ----------------------
 
 var goalListener = new ROSLIB.Topic({
     ros : ros,

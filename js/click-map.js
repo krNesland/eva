@@ -1,5 +1,3 @@
-// Publishing a Topic (setting the goal is actually a topic, not a service)
-// ------------------
 
 // First, we create a Topic object with details of the topic's name and message type.
 var navTopic = new ROSLIB.Topic({
