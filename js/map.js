@@ -24,11 +24,6 @@ var popup = L.popup();
 
 function onMapClick(e) {
     publishGoal(e.latlng);
-    
-    popup
-        .setLatLng(e.latlng)
-        .setContent("Robot will navigate to " + e.latlng.toString() + ".")
-        .openOn(map);
 }
 
 map.on('click', onMapClick);
