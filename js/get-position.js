@@ -6,10 +6,27 @@ var tfClient = new ROSLIB.TFClient({
 });
 
 console.log('Waiting for transforms.');
+/*
+A simpler marker.
 var currMarker = L.circleMarker([1.5, 1.5], {
     color: 'black',
     fillColor: '#777'
 }).addTo(map);
+*/
+
+
+var taurobIcon = L.icon({
+    iconUrl: 'img/taurob_marker.png',
+    shadowUrl: 'img/taurob_marker_shadow.png',
+
+    iconSize:     [30, 29], // size of the icon
+    shadowSize:   [32, 31], // size of the shadow
+    iconAnchor:   [15, 15], // point of the icon which will correspond to marker's location
+    shadowAnchor: [15, 15],  // the same for the shadow
+    popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+});
+
+L.marker([1.5, 1.5], {icon: taurobIcon}).addTo(map);
 
 tfClient.subscribe('base_footprint', function(tf) {
     currMarker.setLatLng(L.latLng(tf.translation.x, -tf.translation.y));
