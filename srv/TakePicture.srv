@@ -1,0 +1,6 @@
+# This service receives the position of an obstacle and should take a picture of the obstacle.
+
+float64 obstaclePosX
+float64 obstaclePosY
+---
+uint8 success

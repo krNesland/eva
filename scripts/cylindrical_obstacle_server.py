@@ -87,7 +87,6 @@ def hough_circles(obstacle_map):
         cv.imshow("imgz", obstacle_map)
         cv.waitKey()
         '''
-        
 
         return (1, best_x_index, best_y_index, best_radius)
     else:

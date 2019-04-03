@@ -63,6 +63,7 @@ add_service_files(
   FollowRoute.srv
   GasGradient.srv
   ReportCylindricalObstacle.srv
+  TakePicture.srv
 )
 
 ## Generate actions in the 'action' folder
