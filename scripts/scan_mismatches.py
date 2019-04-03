@@ -22,8 +22,8 @@ from eva_a.msg import *
 
 # Current pose of the robot (x, y, theta).
 now_pose = [0.0, 0.0, 0.0]
-map_data = np.zeros((map_height, map_width), dtype=np.int8)
-obstacle_map = np.zeros((map_height, map_width), dtype = np.float32)
+map_data = np.zeros((384, 384), dtype=np.int8)
+obstacle_map = np.zeros((384, 384), dtype = np.float32)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
@@ -144,6 +144,10 @@ def scan_callback(data):
 
         # Length of the corresponding scan ray.
         scan_range=data.ranges[i]
+
+        # Do not want to analyze the directions where the readings have errors.
+        if scan_range < (min_range + 0.01):
+            continue
 
         image_theta= -(robot_theta + angle)
 
