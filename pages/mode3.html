@@ -6,6 +6,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!--Import materialize.css-->
     <link type="text/css" rel="stylesheet" href="../css/materialize.min.css" media="screen,projection" />
+    <!--Import leaflet.css-->
+    <link type="text/css" rel="stylesheet" href="../css/leaflet.css" />
     <!--Import style.css-->
     <link type="text/css" rel="stylesheet" href="../css/style.css" />
 
@@ -15,28 +17,85 @@
 
 <body>
 
-    <nav>
-        <div class="nav-wrapper">
-            <a href="../index.html" class="brand-logo center">Peon</a>
-            <ul class="left hide-on-med-and-down">
-                <li><a href="mode1.html">Mode 1</a></li>
-                <li><a href="mode2.html">Mode 2</a></li>
-                <li class="active"><a href="#!">Mode 3</a></li>
-            </ul>
-        </div>
-    </nav>
+    <div class="navbar-fixed">
+        <nav>
+            <div class="nav-wrapper light-blue accent-3">
+                <a href="../index.html" class="brand-logo">Peon</a>
+                <ul class="right hide-on-med-and-down">
+                    <li><a href="mode1.html">Mode 1</a></li>
+                    <li><a href="mode2.html">Mode 2</a></li>
+                    <li class="active"><a href="#!">Mode 3</a></li>
+                    <li><i class="material-icons" id="connection-symbol">wifi</i></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
 
     <div class="section white">
         <div class="row container">
             <h2 class="header">Mode 3</h2>
-            <p class="grey-text text-darken-3 lighten-3">Description</p>
+            <p class="grey-text text-darken-3 lighten-3">Click on the map to send navigation commands to the robot.</p>
         </div>
 
+        <div class="row container">
+            <div class="col xl8">
+                <div id="map"></div>
+            </div>
+            <div class="col xl4">
+                <div class="row container">
+                    <div class="col">
+                        <div class="card" id="gas-dial-container">
+                            <div class="card-image waves-effect waves-block waves-light center">
+                                <h1 class="activator" id="gas-dial">55</h1>
+                            </div>
+                            <div class="card-content">
+                                <span class="card-title activator grey-text text-darken-4">Gas Level<i
+                                        class="material-icons right">more_vert</i></span>
+                            </div>
+                            <div class="card-reveal">
+                                <span class="card-title grey-text text-darken-4">Gas Level<i
+                                        class="material-icons right">close</i></span>
+                                <p>Here is some more information about this product that is only revealed once clicked
+                                    on.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row container">
+                    <div class="col">
+                        <div class="card" id="gas-dial-container">
+                            <div class="card-image waves-effect waves-block waves-light center">
+                                <h1 class="activator" id="fixed-gas-dial">55</h1>
+                            </div>
+                            <div class="card-content">
+                                <span class="card-title activator grey-text text-darken-4">Fixed Gas Level<i
+                                        class="material-icons right">more_vert</i></span>
+                            </div>
+                            <div class="card-reveal">
+                                <span class="card-title grey-text text-darken-4">Fixed Gas Level<i
+                                        class="material-icons right">close</i></span>
+                                <p>Here is some more information about this product that is only revealed once clicked
+                                    on.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!--JavaScript at end of body for optimized loading-->
     <!--Could look up all the files online (probably better)-->
     <script type="text/javascript" src="../js/materialize.min.js"></script>
+    <script type="text/javascript" src="../js/leaflet.js"></script>
+    <script type="text/javascript" src="../js/map.js"></script>
+    <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+    <script type="text/javascript" src="../js/roslib.js"></script>
+    <script type="text/javascript" src="../js/connect.js"></script>
+    <script type="text/javascript" src="../js/click-map.js"></script>
+    <script type="text/javascript" src="../js/get-position.js"></script>
+    <script type="text/javascript" src="../js/gas-level.js"></script>
+    <script type="text/javascript" src="../js/fixed-gas-level.js"></script>
 
 </body>
 
