@@ -10,10 +10,14 @@ import numpy as np
 import cv2 as cv
 import math
 import tf
+import rospkg
+from os import path
 
 from nav_msgs.msg import OccupancyGrid
 from eva_a.srv import *
 from move_base_msgs.msg import MoveBaseActionGoal
+from sensor_msgs.msg import CompressedImage
+from cv_bridge import CvBridge, CvBridgeError
 
 
 map_data = np.zeros((384, 384), dtype=np.int8)
@@ -160,6 +164,19 @@ def navigate_to_pose(pose):
         rospy.sleep(1.0)
 
 
+def callback_capture_obstacle(data):
+    try:
+        bridge = CvBridge()
+        rospack = rospkg.RosPack()
+        cv_image = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+        img_path = path.join(rospack.get_path('eva_a'), 'img', 'captures', 'capture.jpg')
+        cv.imwrite(img_path, cv_image)
+        print("Image stored: " + img_path)
+
+    except CvBridgeError as e:
+        print(e)
+
+
 def handle_take_picture(req):
     global map_data
 
@@ -171,6 +188,8 @@ def handle_take_picture(req):
 
     if len(pose) > 0:
         navigate_to_pose(pose)
+        rospy.sleep(1)
+        rospy.Subscriber("/camera/rgb/image_raw/compressed", CompressedImage, callback_capture_obstacle, queue_size=1)
         return TakePictureResponse(1)
     else:
         print("Could not find a suitable pose to take a picture from.")
