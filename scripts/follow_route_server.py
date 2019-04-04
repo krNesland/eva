@@ -55,6 +55,8 @@ def handle_follow_route(req):
     now_msg.goal.target_pose.pose.position.x = now_goal[0]
     now_msg.goal.target_pose.pose.position.y = now_goal[1]
     now_msg.goal.target_pose.pose.orientation.w = 1.0
+
+    rospy.sleep(0.5)
     pub.publish(now_msg)
 
     rate = rospy.Rate(10.0)
@@ -74,7 +76,9 @@ def handle_follow_route(req):
                 now_goal = waypoints.pop(0)
                 now_msg.goal.target_pose.pose.position.x = now_goal[0]
                 now_msg.goal.target_pose.pose.position.y = now_goal[1]
-                now_msg.goal.target_pose.pose.orientation.z = now_goal[2]
+                # Orientation as quaternion.
+                now_msg.goal.target_pose.pose.orientation.z = math.sin(now_goal[2]/2)
+                now_msg.goal.target_pose.pose.orientation.w = math.cos(now_goal[2]/2)
                 pub.publish(now_msg)
                 print("FollowRoute is heading for next waypoint.")
             else:
