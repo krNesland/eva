@@ -1,5 +1,3 @@
-// Calling a service (make the robot follow a route)
-// -----------------
 
 var followRouteClient = new ROSLIB.Service({
     ros : ros,

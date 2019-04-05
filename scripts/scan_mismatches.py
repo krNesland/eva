@@ -232,11 +232,13 @@ def scan_callback(data):
     obstacle_map[obstacle_map < -2] = -2
     obstacle_map[obstacle_map > 2] = 2
 
+    '''
     visualizer = (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map))
     visualizer = np.rot90(visualizer)
 
     cv.imshow("vizz", visualizer)
     cv.waitKey(30)
+    '''
 
     # If there was detected any possible mismatches. Sending a message with these mismatches.
     if np.any(obstacle_map):

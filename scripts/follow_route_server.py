@@ -88,6 +88,7 @@ def handle_follow_route(req):
         rate.sleep()
 
 
+    rospy.sleep(1.0)
     return FollowRouteResponse(1) # 1 if success.
 
 def follow_route_server():
