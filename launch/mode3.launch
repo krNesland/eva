@@ -1,11 +1,11 @@
 <launch>
 
-    <param name="/eva/gasX" value="3.0" />
-    <param name="/eva/gasY" value="-3.0" />
+    <param name="/eva/gasX" value="3.4" />
+    <param name="/eva/gasY" value="-1.0" />
 
     <param name="/eva/fixedSensorX" value="4.0" />
-    <param name="/eva/fixedSensorY" value="-4.0" />
-
+    <param name="/eva/fixedSensorY" value="-2.5" />
+    
     <include file="$(find eva_a)/launch/turtlebot3_eva_b.launch"/>
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
     <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">

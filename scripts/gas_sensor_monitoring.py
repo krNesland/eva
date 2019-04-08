@@ -4,10 +4,12 @@ import rospy
 from std_msgs.msg import String
 from move_base_msgs.msg import MoveBaseActionGoal
 
+start_move = False
+
 def send_navigation_command(pub):
     try:
-        goal_x = rospy.get_param('/eva/fixedSensorX') - 1.0
-        goal_y = rospy.get_param('/eva/fixedSensorY') + 2.0
+        goal_x = rospy.get_param('/eva/fixedSensorX') - 0.5
+        goal_y = rospy.get_param('/eva/fixedSensorY') + 0.5
     except:
         print("Fixed gas sensor position is unknown.")
         return
@@ -23,26 +25,30 @@ def send_navigation_command(pub):
 
 
 def callback(data):
+    global start_move
     gas_level = float(data.data)
 
-    if gas_level > 30.0:
-        return True
-
-    return False
+    if gas_level > 20.0:
+        start_move = True
 
     
 def listener():
+    global start_move
 
     rospy.init_node('gas_sensor_monitoring', anonymous=True)
 
     pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=10)
 
-    send_command = rospy.Subscriber('/eva/fixed_gas_level', String, callback)
+    # Waiting a little (just for visualization).
+    rospy.sleep(7)
 
-    rospy.sleep(10)
+    rospy.Subscriber('/eva/fixed_gas_level', String, callback)
 
-    if send_command:
-        send_navigation_command(pub)
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        if start_move:
+            send_navigation_command(pub)
+        rate.sleep()
 
     rospy.spin()
 
