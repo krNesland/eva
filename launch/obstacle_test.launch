@@ -1,0 +1,10 @@
+<launch>
+
+    <include file="$(find eva_a)/launch/turtlebot3_eva_b.launch"/>
+    <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+	  <arg name="map_file" value="$(find eva_a)/map/map.yaml" />
+    </include>
+
+    <node pkg="eva_a" name="initial_pose" type="initial_pose.py"/>
+    
+</launch>

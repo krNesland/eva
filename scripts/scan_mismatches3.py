@@ -22,7 +22,7 @@ from eva_a.msg import *
 
 # Current pose of the robot (x, y, theta).
 now_pose = [0.0, 0.0, 0.0]
-map_data = np.zeros((384, 384), dtype=np.int8)
+map_data = np.zeros((384, 384), dtype=np.uint8)
 obstacle_map = np.zeros((384, 384), dtype = np.float32)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
@@ -35,6 +35,13 @@ def map_to_img(x_map, y_map):
 
 
 def map_feature_nearby(x, y, org_map, region_size):
+
+    if org_map[y][x] > 50:
+        return True
+    else:
+        return False
+
+    # Testing the functionality in the lines above.
 
     left = x - region_size
     if left < 0:
@@ -76,7 +83,13 @@ def map_callback(data):
         resolution = 0.05
 
     # Making it equal to how the .pgm file looks.
-    map_data=np.flipud(np.reshape(data.data, (map_height, map_width)).astype(np.int8))
+    raw_map_data = np.flipud(np.reshape(data.data, (map_height, map_width)).astype(np.int8))
+    raw_map_data[raw_map_data < 0] = 0
+    raw_map_data = raw_map_data.astype(np.uint8)
+
+    ret, map_data = cv.threshold(raw_map_data, 50, 255, cv.THRESH_BINARY)
+    kernel = np.ones((3, 3))
+    map_data = cv.morphologyEx(map_data, cv.MORPH_DILATE, kernel)
 
     # Update pose.
     tf_listener=tf.TransformListener()
@@ -113,16 +126,12 @@ def scan_callback(data):
     global pub
     global obstacle_map
 
-    # THIS IS THE VERSION WHERE THE REGION AROUND IS CONTROLLED.
+    # NOT CHECKING THE AREA AROUND FOR OCCUPANCY AND SUBTRACTING THE ORIGINAL MAP.
 
-    # Probability of obstacle if hit, but not on map.
-    prob_hit_nmap = 0.9
-    # Probability of obstacle if hit and on map.
-    prob_hit_map = 0.1
-    # Probability of obstacle if not hit and not on map.
-    prob_nhit_nmap = 0.3
-    # Probability of obstacle if not hit and on map.
-    prob_nhit_map = 0.05
+    # Probability of occupied if hit.
+    prob_hit = 0.7
+    # Probability of occupied if not hit.
+    prob_nhit = 0.2
 
     max_range=data.range_max
     min_range=data.range_min
@@ -203,21 +212,12 @@ def scan_callback(data):
 
             # If the laser scan stops earlier than expected from the map.
             if map_range > scan_range:
-                # If there are cells nearby that are occupied on the map.
-                if map_feature_nearby(x, y, map_data, collision_region):
-                    update = math.log10(prob_hit_map/(1 - prob_hit_map))
-                else:
-                    update = math.log10(prob_hit_nmap/(1 - prob_hit_nmap))
-
+                update = math.log10(prob_hit/(1 - prob_hit))
                 obstacle_map[y][x] = obstacle_map[y][x] + update
-                
+
                 break
             else:
-                if map_feature_nearby(x, y, map_data, collision_region):
-                    update = math.log10(prob_nhit_map/(1 - prob_nhit_map))
-                else:
-                    update = math.log10(prob_nhit_nmap/(1 - prob_nhit_nmap))
-
+                update = math.log10(prob_nhit/(1 - prob_nhit))
                 obstacle_map[y][x] = obstacle_map[y][x] + update
 
             if x_axis:
@@ -234,6 +234,9 @@ def scan_callback(data):
     obstacle_map[obstacle_map > 2] = 2
 
     visualizer = (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map))
+
+    visualizer[map_data > 127] = -2
+
     visualizer = np.rot90(visualizer)
 
     cv.imshow("vizz", visualizer)

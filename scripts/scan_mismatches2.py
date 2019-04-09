@@ -36,6 +36,13 @@ def map_to_img(x_map, y_map):
 
 def map_feature_nearby(x, y, org_map, region_size):
 
+    if org_map[y][x] > 50:
+        return True
+    else:
+        return False
+
+    # Testing the functionality in the lines above.
+
     left = x - region_size
     if left < 0:
         left = 0
@@ -113,16 +120,16 @@ def scan_callback(data):
     global pub
     global obstacle_map
 
-    # THIS IS THE VERSION WHERE THE REGION AROUND IS CONTROLLED.
+    # NOT CHECKING THE AREA AROUND FOR OCCUPANCY.
 
     # Probability of obstacle if hit, but not on map.
-    prob_hit_nmap = 0.9
+    prob_hit_nmap = 0.6
     # Probability of obstacle if hit and on map.
-    prob_hit_map = 0.1
+    prob_hit_map = 0.2
     # Probability of obstacle if not hit and not on map.
-    prob_nhit_nmap = 0.3
+    prob_nhit_nmap = 0.45
     # Probability of obstacle if not hit and on map.
-    prob_nhit_map = 0.05
+    prob_nhit_map = 0.1
 
     max_range=data.range_max
     min_range=data.range_min
