@@ -24,4 +24,7 @@
     <node pkg="eva_a" name="gas_level" type="gas_level_publisher.py"/>
     <node pkg="eva_a" name="gas_gradient" type="gas_gradient_server.py"/>
 
+    <param name="/amcl/initial_pose_x" value="1.0" />
+    <param name="/amcl/initial_pose_y" value="-3.0" />
+
 </launch>

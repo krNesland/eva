@@ -33,39 +33,6 @@ def map_to_img(x_map, y_map):
 
     return (x_image, y_image)
 
-
-def map_feature_nearby(x, y, org_map, region_size):
-
-    if org_map[y][x] > 50:
-        return True
-    else:
-        return False
-
-    # Testing the functionality in the lines above.
-
-    left = x - region_size
-    if left < 0:
-        left = 0
-
-    right = x + region_size
-    if right > org_map.shape[1]:
-        right = org_map.shape[1]
-
-    top = y - region_size
-    if top < 0:
-        top = 0
-
-    bottom = y + region_size
-    if bottom > org_map.shape[0]:
-        bottom = org_map.shape[0]
-
-    region = org_map[top:bottom, left:right]
-
-    if np.any(region > 50):
-        return True
-    else:
-        return False
-
 # Loading the map ans setting some parameters
 def map_callback(data):
     global map_data
@@ -88,7 +55,7 @@ def map_callback(data):
     raw_map_data = raw_map_data.astype(np.uint8)
 
     ret, map_data = cv.threshold(raw_map_data, 50, 255, cv.THRESH_BINARY)
-    kernel = np.ones((3, 3))
+    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
     map_data = cv.morphologyEx(map_data, cv.MORPH_DILATE, kernel)
 
     # Update pose.
@@ -114,12 +81,9 @@ def scan_callback(data):
         map_height = rospy.get_param('mapHeight')
         resolution = rospy.get_param('resolution')
     except:
-        print("Unable to load map parameters.")
         map_width = 384
         map_height = 384
         resolution = 0.05
-
-    collision_region = 4
 
     global now_pose
     global map_data
@@ -129,9 +93,9 @@ def scan_callback(data):
     # NOT CHECKING THE AREA AROUND FOR OCCUPANCY AND SUBTRACTING THE ORIGINAL MAP.
 
     # Probability of occupied if hit.
-    prob_hit = 0.7
+    prob_hit = 0.65
     # Probability of occupied if not hit.
-    prob_nhit = 0.2
+    prob_nhit = 0.35
 
     max_range=data.range_max
     min_range=data.range_min
@@ -145,9 +109,6 @@ def scan_callback(data):
     robot_y=now_pose[1]
 
     image_x, image_y = map_to_img(robot_x, robot_y)
-
-    print("New scan received.")
-    print((robot_x, robot_y))
 
     # Angle is the angle of the ray relative to the robot. Looping through all.
     for i, angle in enumerate(np.arange(angle_min, angle_max, angle_inc, dtype=np.float32)):
@@ -233,13 +194,17 @@ def scan_callback(data):
     obstacle_map[obstacle_map < -2] = -2
     obstacle_map[obstacle_map > 2] = 2
 
-    visualizer = (obstacle_map - np.min(obstacle_map))/(np.max(obstacle_map) - np.min(obstacle_map))
-
-    visualizer[map_data > 127] = -2
-
+    visualizer = (obstacle_map + 2)/4
+    visualizer[map_data > 127] = 0.0 # Removing where there is map
     visualizer = np.rot90(visualizer)
 
-    cv.imshow("vizz", visualizer)
+    visualizer2 = np.array(255.0*visualizer, dtype=np.uint8)
+
+    #kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
+
+    #closed = cv.morphologyEx(visualizer2, cv.MORPH_CLOSE, kernel)
+
+    cv.imshow("vizz", visualizer2)
     cv.waitKey(30)
 
     # If there was detected any possible mismatches. Sending a message with these mismatches.
