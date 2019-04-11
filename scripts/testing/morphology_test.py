@@ -1,8 +1,6 @@
 import numpy as np
 import cv2 as cv
-from sklearn.cluster import KMeans
 from matplotlib import pyplot as plt
-from itertools import cycle
 
 class Obstacle:
     def __init__(self, cnt):

@@ -189,31 +189,24 @@ def scan_callback(data):
                 x=image_x + int(round((y - image_y)/slope))
         
 
-
-
     obstacle_map[obstacle_map < -2] = -2
     obstacle_map[obstacle_map > 2] = 2
 
     visualizer = (obstacle_map + 2)/4
     visualizer[map_data > 127] = 0.0 # Removing where there is map
-    visualizer = np.rot90(visualizer)
 
     visualizer2 = np.array(255.0*visualizer, dtype=np.uint8)
-
-    #kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
-
-    #closed = cv.morphologyEx(visualizer2, cv.MORPH_CLOSE, kernel)
 
     cv.imshow("vizz", visualizer2)
     cv.waitKey(30)
 
     # If there was detected any possible mismatches. Sending a message with these mismatches.
-    if np.any(obstacle_map):
+    if np.any(visualizer2):
         mismatch_msg=ScanMismatches()
         mismatch_msg.header.frame_id='opencv'
         mismatch_msg.height=map_height
         mismatch_msg.width=map_width
-        mismatch_msg.data=(obstacle_map.flatten()).tolist()
+        mismatch_msg.data=(visualizer2.flatten()).tolist()
         pub.publish(mismatch_msg)
 
 

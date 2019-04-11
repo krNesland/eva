@@ -16,6 +16,8 @@ var image = L.imageOverlay('../img/map.png', bounds).addTo(map);
 
 map.fitBounds(bounds);
 
+var obstacleLayer = L.layerGroup().addTo(map);
+
 // For calibration.
 // var marker1 = L.marker([5.0, 1.5]).addTo(map);
 // var marker2 = L.marker([1.0, 3.5]).addTo(map);
