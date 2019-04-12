@@ -53,6 +53,9 @@ def find_obstacles():
     obstacles = []
 
     for cnt in contours:
+        if len(cnt) < 5:
+            continue
+
         if cv.contourArea(cnt) < 5:
             continue
 

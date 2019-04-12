@@ -197,7 +197,7 @@ def scan_callback(data):
 
     visualizer2 = np.array(255.0*visualizer, dtype=np.uint8)
 
-    cv.imshow("vizz", visualizer2)
+    cv.imshow("visualizer", visualizer)
     cv.waitKey(30)
 
     # If there was detected any possible mismatches. Sending a message with these mismatches.
