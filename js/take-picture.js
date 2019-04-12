@@ -4,16 +4,12 @@ var takePictureClient = new ROSLIB.Service({
     serviceType : 'eva_a/TakePicture'
 });
 
-function callTakePicture() {
-
-    if (!obstacleFound) {
-        return;
-    }
+function callTakePicture(obstaclePos) {
 
     console.log("Trying to call TakePicture.");
     var request = new ROSLIB.ServiceRequest({
-        obstaclePosX: obstacleLat,
-        obstaclePosY: -obstacleLng
+        obstaclePosX: obstaclePos.lat,
+        obstaclePosY: -obstaclePos.lng
     });
     
     takePictureClient.callService(request, function(result) {

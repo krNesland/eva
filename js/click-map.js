@@ -39,3 +39,9 @@ function publishGoal(latlng) {
 
     console.log("Sent message to navigate to (" + latlng.lat + ", " + latlng.lng + ").");
 }
+
+function onMapClick(e) {
+    publishGoal(e.latlng);
+}
+
+map.on('click', onMapClick);

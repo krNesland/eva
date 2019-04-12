@@ -23,9 +23,3 @@ var obstacleLayer = L.layerGroup().addTo(map);
 // var marker2 = L.marker([1.0, 3.5]).addTo(map);
 
 var popup = L.popup();
-
-function onMapClick(e) {
-    publishGoal(e.latlng);
-}
-
-map.on('click', onMapClick);

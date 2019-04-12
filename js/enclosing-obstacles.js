@@ -10,7 +10,9 @@ class Obstacle {
             color: 'red',
             fillColor: '#700',
             radius: this.radius
-        }).addTo(obstacleLayer);
+        }).addTo(obstacleLayer).on('click', function(e) {
+            callTakePicture(e.latlng);
+        });
     }
 }
 
