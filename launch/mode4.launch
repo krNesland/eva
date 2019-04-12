@@ -1,8 +1,5 @@
 <launch>
 
-    <param name="/eva/gasX" value="3.0" />
-    <param name="/eva/gasY" value="-3.0" />
-
     <include file="$(find eva_a)/launch/turtlebot3_eva_b.launch"/>
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
     <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
@@ -12,7 +9,7 @@
     <node pkg="tf2_web_republisher" name="tf2_web_republisher" type="tf2_web_republisher"/>
     <node pkg="eva_a" name="route_server" type="follow_route_server.py"/>
     <node pkg="eva_a" name="scan_mismatches" type="scan_mismatches.py"/>
-    <node pkg="eva_a" name="cylindrical_obstacle_server" type="cylindrical_obstacle_server.py"/>
+    <node pkg="eva_a" name="obstacle_publisher" type="obstacle_publisher.py"/>
     <node pkg="eva_a" name="take_picture_server" type="take_picture_server.py"/>
 
     <param name="/amcl/initial_pose_x" value="1.0" />
