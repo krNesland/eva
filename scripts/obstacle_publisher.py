@@ -44,11 +44,11 @@ def find_obstacles():
     closed = cv.morphologyEx(thresh, cv.MORPH_CLOSE, se_close)
 
     # Open to remove noise.
-    se_open = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
-    opened = cv.morphologyEx(closed, cv.MORPH_OPEN, se_open)
+    #se_open = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
+    #opened = cv.morphologyEx(closed, cv.MORPH_OPEN, se_open)
 
     # Find contours.
-    im2, contours, hierarchy = cv.findContours(opened, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    im2, contours, hierarchy = cv.findContours(closed, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
     obstacles = []
 
@@ -60,6 +60,10 @@ def find_obstacles():
 
         # Multiplying the length of the two main axes.
         if ellipse[1][0]*ellipse[1][1] < 4:
+            continue
+
+        # If way too large for an obstacle.
+        if ellipse[1][0] > 20 or ellipse[1][1] > 20:
             continue
 
         obst = Obstacle(cnt)

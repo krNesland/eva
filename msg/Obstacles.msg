@@ -4,4 +4,4 @@ uint32 numObstacles
 
 float32[] latCenters
 float32[] lngCenters
-uint32[] radii
+float32[] radii
