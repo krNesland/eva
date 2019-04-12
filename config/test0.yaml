@@ -1,0 +1,6 @@
+map_kernel_size: 5
+prob_hit: 0.65
+prob_nhit: 0.35
+obstacle_kernel_size: 5
+obstacle_min_area: 5
+obstacle_max_radius: 20

@@ -43,10 +43,6 @@ def find_obstacles():
     se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
     closed = cv.morphologyEx(thresh, cv.MORPH_CLOSE, se_close)
 
-    # Open to remove noise.
-    #se_open = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
-    #opened = cv.morphologyEx(closed, cv.MORPH_OPEN, se_open)
-
     # Find contours.
     im2, contours, hierarchy = cv.findContours(closed, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
