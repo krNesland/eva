@@ -192,12 +192,16 @@ def scan_callback(data):
     obstacle_map[obstacle_map < -2] = -2
     obstacle_map[obstacle_map > 2] = 2
 
-    visualizer = (obstacle_map + 2)/4
-    visualizer[map_data > 127] = 0.0 # Removing where there is map
+    visualizer = (obstacle_map + 2)/4.
+
+    # Uncommented for testing.
+
+    # Removing where there is map.
+    #visualizer[map_data > 127] = 0.0
 
     visualizer2 = np.array(255.0*visualizer, dtype=np.uint8)
 
-    cv.imshow("visualizer", visualizer)
+    cv.imshow("visualizer", visualizer2)
     cv.waitKey(30)
 
     # If there was detected any possible mismatches. Sending a message with these mismatches.
