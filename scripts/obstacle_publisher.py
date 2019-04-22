@@ -70,7 +70,7 @@ def find_obstacles():
             continue
 
         # Not interested in very small areas.
-        if cv.contourArea(cnt) < minObstacleArea:
+        if cv.contourArea(cnt) < min_obstacle_area:
             continue
 
         ellipse = cv.fitEllipse(cnt)
