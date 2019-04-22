@@ -36,30 +36,44 @@ class Obstacle:
 def find_obstacles():
     global obstacle_map
 
+    try:
+        close_radius = rospy.get_param('/eva/obstacleCloseRadius')
+        open_radius = rospy.get_param('/eva/obstacleOpenRadius')
+        min_obstacle_area = rospy.get_param('/eva/minObstacleArea')
+        
+    except:
+        print("Unable to load morphology parameters.")
+        close_radius = 3
+        open_radius = 3
+        min_obstacle_area = 5
+
     # Threshold.
     ret, thresh = cv.threshold(obstacle_map, 150, 255, cv.THRESH_BINARY)
 
     # Close to make more connected.
-    se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
+    se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (close_radius, close_radius))
     closed = cv.morphologyEx(thresh, cv.MORPH_CLOSE, se_close)
 
+    # Open to remove thin structures and small grains.
+    se_open = cv.getStructuringElement(cv.MORPH_ELLIPSE, (open_radius, open_radius))
+    opened = cv.morphologyEx(closed, cv.MORPH_CLOSE, se_open)
+
     # Find contours.
-    im2, contours, hierarchy = cv.findContours(closed, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    im2, contours, hierarchy = cv.findContours(opened, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
     obstacles = []
 
+    # Filtering out some of the contours that are unlikely to be obstacles.
     for cnt in contours:
+        # Not interested in lines.
         if len(cnt) < 5:
             continue
 
-        if cv.contourArea(cnt) < 5:
+        # Not interested in very small areas.
+        if cv.contourArea(cnt) < minObstacleArea:
             continue
 
         ellipse = cv.fitEllipse(cnt)
-
-        # Multiplying the length of the two main axes.
-        if ellipse[1][0]*ellipse[1][1] < 4:
-            continue
 
         # If way too large for an obstacle.
         if ellipse[1][0] > 20 or ellipse[1][1] > 20:
@@ -71,12 +85,11 @@ def find_obstacles():
     return obstacles
 
 
-
 def talker():
     pub = rospy.Publisher('/eva/obstacles', Obstacles, queue_size=10)
 
     try:
-        resolution = rospy.get_param('resolution')
+        resolution = rospy.get_param('/eva/resolution')
     except:
         resolution = 0.05
 

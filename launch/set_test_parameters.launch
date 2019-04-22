@@ -1,0 +1,13 @@
+<launch>
+
+    <param name="/eva/mapDilateRadius" value="5" />
+    
+    <param name="/eva/probOccIfHit" value="0.65" />
+    <param name="/eva/probOccIfNotHit" value="0.35" />
+
+    <param name="/eva/obstacleCloseRadius" value="5" />
+    <param name="/eva/obstacleOpenRadius" value="5" />
+
+    <param name="/eva/minObstacleArea" value="5" />
+
+</launch>

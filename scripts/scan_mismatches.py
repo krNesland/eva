@@ -28,8 +28,8 @@ obstacle_map = np.zeros((384, 384), dtype = np.float32)
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
 def map_to_img(x_map, y_map):
-    x_image = int(round(20*x_map + 200))
-    y_image = int(round(-20*y_map + 184))
+    x_image = int(round(20*x_map + 200)) - 1
+    y_image = int(round(-20*y_map + 184)) - 1
 
     return (x_image, y_image)
 
@@ -40,14 +40,16 @@ def map_callback(data):
     global obstacle_map
 
     try:
-        map_width = rospy.get_param('mapWidth')
-        map_height = rospy.get_param('mapHeight')
-        resolution = rospy.get_param('resolution')
+        map_width = rospy.get_param('/eva/mapWidth')
+        map_height = rospy.get_param('/eva/mapHeight')
+        resolution = rospy.get_param('/eva/resolution')
+        map_dilate_radius = rospy.get_param('/eva/mapDilateRadius')
     except:
         print("Unable to load map parameters.")
         map_width = 384
         map_height = 384
         resolution = 0.05
+        map_dilate_radius = 5
 
     # Making it equal to how the .pgm file looks.
     raw_map_data = np.flipud(np.reshape(data.data, (map_height, map_width)).astype(np.int8))
@@ -55,7 +57,7 @@ def map_callback(data):
     raw_map_data = raw_map_data.astype(np.uint8)
 
     ret, map_data = cv.threshold(raw_map_data, 50, 255, cv.THRESH_BINARY)
-    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
+    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (map_dilate_radius, map_dilate_radius))
     map_data = cv.morphologyEx(map_data, cv.MORPH_DILATE, kernel)
 
     # Update pose.
@@ -77,9 +79,9 @@ def map_callback(data):
 # Comparing scan to map.
 def scan_callback(data):
     try:
-        map_width = rospy.get_param('mapWidth')
-        map_height = rospy.get_param('mapHeight')
-        resolution = rospy.get_param('resolution')
+        map_width = rospy.get_param('/eva/mapWidth')
+        map_height = rospy.get_param('/eva/mapHeight')
+        resolution = rospy.get_param('/eva/resolution')
     except:
         map_width = 384
         map_height = 384
@@ -90,12 +92,17 @@ def scan_callback(data):
     global pub
     global obstacle_map
 
-    # NOT CHECKING THE AREA AROUND FOR OCCUPANCY AND SUBTRACTING THE ORIGINAL MAP.
-
-    # Probability of occupied if hit.
-    prob_hit = 0.65
-    # Probability of occupied if not hit.
-    prob_nhit = 0.35
+    try:
+         # Probability of occupied if hit.
+        prob_hit = rospy.get_param('/eva/probOccIfHit')
+        # Probability of occupied if not hit.
+        prob_nhit = rospy.get_param('/eva/probOccIfNotHit')
+    except:
+        print("Unable to load occupancy parameters.")
+         # Probability of occupied if hit.
+        prob_hit = 0.65
+        # Probability of occupied if not hit.
+        prob_nhit = 0.35
 
     max_range=data.range_max
     min_range=data.range_min
