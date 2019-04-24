@@ -25,10 +25,10 @@ class Obstacle:
         cv.circle(canvas, self.center, self.radius, 255, 1)
 
     def get_lat(self, resolution):
-        return (self.center[0] - 200)*resolution
+        return (self.center[0] - 199)*resolution
 
     def get_lng(self, resolution):
-        return (self.center[1] - 184)*resolution
+        return (self.center[1] - 183)*resolution
 
     def get_radius(self, resolution):
         return self.radius*resolution

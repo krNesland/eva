@@ -18,6 +18,7 @@ from eva_a.srv import *
 from move_base_msgs.msg import MoveBaseActionGoal
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
+from geometry_msgs.msg import Twist
 
 
 map_data = np.zeros((384, 384), dtype=np.int8)
@@ -80,6 +81,42 @@ def free_space(x_map, y_map, region_size):
     else:
         return True
 
+
+# Should also be able to define the wanted radius.
+def drive_around(radius):
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+    rospy.sleep(0.5)
+
+    # Changing radius.
+    if radius <= 1.0:
+        vel_msg_forward = Twist()
+        vel_msg_forward.linear.x = 0.1
+        pub.publish(vel_msg_forward)
+        rospy.sleep((1.0 - radius)*10)
+    else:
+        vel_msg_backward = Twist()
+        vel_msg_backward.linear.x = -0.1
+        pub.publish(vel_msg_backward)
+        rospy.sleep((radius - 1.0)*10)
+
+    # Turning to face parallell.
+    vel_msg_right = Twist()
+    vel_msg_right.angular.z = -0.5
+    pub.publish(vel_msg_right)
+    rospy.sleep(3.14)
+
+    print("Driving around.")
+
+    # Driving around.
+    vel_msg_around = Twist()
+    vel_msg_around.angular.z = 0.125/radius
+    vel_msg_around.linear.x = 0.125
+    pub.publish(vel_msg_around)
+    rospy.sleep(16*3.14*radius)
+
+    vel_msg_stop = Twist()
+    pub.publish(vel_msg_stop)
 
 
 def find_capturing_pose(x_obstacle, y_obstacle):
@@ -162,7 +199,8 @@ def navigate_to_pose(pose):
             finished = True
 
         rospy.sleep(1.0)
-
+    
+    rospy.sleep(1.0)
 
 def handle_take_picture(req):
     global map_data
@@ -187,6 +225,8 @@ def handle_take_picture(req):
         print("Image stored: " + img_path)
 
         rospy.sleep(1)
+
+        drive_around(0.5)
 
         return TakePictureResponse(1)
     else:
