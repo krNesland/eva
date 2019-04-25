@@ -10,25 +10,23 @@ import numpy as np
 import cv2 as cv
 import math
 import tf
-import rospkg
-from os import path
 
-from nav_msgs.msg import OccupancyGrid
+from eva_a.msg import *
 from eva_a.srv import *
 from move_base_msgs.msg import MoveBaseActionGoal
-from sensor_msgs.msg import CompressedImage
-from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist
 
 
-map_data = np.zeros((384, 384), dtype=np.int8)
+obstacle_map = np.zeros((384, 384), dtype=np.uint8)
 robot_pose = [0.0, 0.0, 0.0]
 
 def map_callback(data):
-    global map_data
+    global obstacle_map
     global robot_pose
 
-    map_data = np.flipud(np.reshape(data.data, (data.info.height, data.info.width)).astype(np.int8))
+    obstacle_data = np.array(data.data, dtype=np.uint8)
+    obstacle_map = np.reshape(obstacle_data, (data.height, data.width))
+    ret, obstacle_map = cv.threshold(obstacle_map, 150, 255, cv.THRESH_BINARY)
 
     # Update pose.
     tf_listener=tf.TransformListener()
@@ -46,7 +44,7 @@ def map_callback(data):
             continue
 
 
-# Converting from map coordinates to coordinates of map_data.
+# Converting from map coordinates to coordinates of obstacle_map.
 def map_to_img(x_map, y_map):
     x_image = int(round(20*x_map + 199))
     y_image = int(round(-20*y_map + 183))
@@ -54,8 +52,25 @@ def map_to_img(x_map, y_map):
     return (x_image, y_image)
 
 
+# Extracts the region of the obstacle map that has just been circled around.
+def extract_region(x_obstacle, y_obstacle, circling_radius):
+    global obstacle_map
+
+    width = int(round(20*2*circling_radius))
+    height = width
+    left, bottom = map_to_img(x_obstacle - circling_radius, y_obstacle - circling_radius)
+
+    # Look
+    region = obstacle_map[(bottom - height):bottom, left:(left + width)]
+    print((left, bottom))
+    print(region.shape)
+
+    cv.imshow('obstacle', region)
+    cv.waitKey()
+
+
 def free_space(x_map, y_map, region_size):
-    global map_data
+    global obstacle_map
     x, y = map_to_img(x_map, y_map)
 
     left = x - region_size
@@ -63,7 +78,7 @@ def free_space(x_map, y_map, region_size):
         return False
 
     right = x + region_size
-    if right > map_data.shape[1]:
+    if right > obstacle_map.shape[1]:
         return False
 
     top = y - region_size
@@ -71,10 +86,10 @@ def free_space(x_map, y_map, region_size):
         return False
 
     bottom = y + region_size
-    if bottom > map_data.shape[0]:
+    if bottom > obstacle_map.shape[0]:
         return False
 
-    region = map_data[top:bottom, left:right]
+    region = obstacle_map[top:bottom, left:right]
 
     if np.any(region > 50):
         return False
@@ -82,8 +97,28 @@ def free_space(x_map, y_map, region_size):
         return True
 
 
-def find_capturing_pose(x_obstacle, y_obstacle):
-    global map_data
+# Should also be able to define the wanted radius.
+def drive_around(radius):
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+    rospy.sleep(0.5)
+
+    print("Driving around.")
+
+    # Driving around.
+    vel_msg_around = Twist()
+    vel_msg_around.angular.z = 0.125/radius
+    vel_msg_around.linear.x = 0.125
+    pub.publish(vel_msg_around)
+    rospy.sleep(16*3.14*radius)
+
+    vel_msg_stop = Twist()
+    pub.publish(vel_msg_stop)
+    print("Finished driving around.")
+
+# Almost identical to find_capturing_pose().
+def find_starting_pose(x_obstacle, y_obstacle, circling_radius):
+    global obstacle_map
     global robot_pose
 
     step = (2*math.pi)/10
@@ -92,9 +127,9 @@ def find_capturing_pose(x_obstacle, y_obstacle):
     for i in range(10):
         angle = i*step
 
-        x = x_obstacle + math.cos(angle)
-        y = y_obstacle + math.sin(angle)
-        theta = angle - math.pi
+        x = x_obstacle + circling_radius*math.cos(angle)
+        y = y_obstacle + circling_radius*math.sin(angle)
+        theta = angle - math.pi - (math.pi/2)
 
         # If a 12x12 px area unoccupied around.
         if free_space(x, y, 6):
@@ -104,7 +139,7 @@ def find_capturing_pose(x_obstacle, y_obstacle):
     '''
 
     visualizer = np.zeros((384, 384), dtype=np.uint8)
-    visualizer[map_data > 50] = 50
+    visualizer[obstacle_map > 50] = 50
 
     obstacleX, obstacleY = map_to_img(x_obstacle, y_obstacle)
     visualizer[obstacleY][obstacleX] = 250
@@ -165,40 +200,38 @@ def navigate_to_pose(pose):
     
     rospy.sleep(1.0)
 
-def handle_take_picture(req):
-    global map_data
+def handle_drive_around(req):
+    global obstacle_map
+
+    circling_radius = 0.7
 
     x_obstacle = req.obstaclePosX
     y_obstacle = req.obstaclePosY
 
-    pose = find_capturing_pose(x_obstacle, y_obstacle)
+    pose = find_starting_pose(x_obstacle, y_obstacle, circling_radius)
     print(pose)
 
     if len(pose) > 0:
         navigate_to_pose(pose)
 
-        data = rospy.wait_for_message("/camera/rgb/image_raw/compressed", CompressedImage)
+        rospy.sleep(1)
 
-        bridge = CvBridge()
-        rospack = rospkg.RosPack()
-        rospy.sleep(0.2)
-        cv_image = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
-        img_path = path.join(rospack.get_path('eva_a'), 'img', 'captures', 'capture.jpg')
-        cv.imwrite(img_path, cv_image)
-        print("Image stored: " + img_path)
+        drive_around(circling_radius)
+        extract_region(x_obstacle, y_obstacle, circling_radius)
 
         return TakePictureResponse(1)
     else:
-        print("Could not find a suitable pose to take a picture from.")
+        print("Could not find a suitable pose to start from.")
         return TakePictureResponse(0)
 
 
 def take_picture_server():
     rospy.init_node('take_picture', anonymous=True)
-    rospy.Subscriber('/map', OccupancyGrid, map_callback, queue_size=1)
+    rospy.Subscriber('/eva/scan_mismatches',
+                     ScanMismatches, map_callback, queue_size=1)
 
     s = rospy.Service('/eva/take_picture',
-                      TakePicture, handle_take_picture)
+                      TakePicture, handle_drive_around)
     rospy.spin()
 
 
