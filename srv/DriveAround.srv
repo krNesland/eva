@@ -1,0 +1,7 @@
+# This service receives the position of an obstacle and should drive around it in a circle.
+
+float64 obstaclePosX
+float64 obstaclePosY
+float64 circlingRadius
+---
+uint8 area

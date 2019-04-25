@@ -68,6 +68,8 @@ def extract_region(x_obstacle, y_obstacle, circling_radius):
     cv.imshow('obstacle', region)
     cv.waitKey()
 
+    return region
+
 
 def free_space(x_map, y_map, region_size):
     global obstacle_map
@@ -217,23 +219,23 @@ def handle_drive_around(req):
         rospy.sleep(1)
 
         drive_around(circling_radius)
-        extract_region(x_obstacle, y_obstacle, circling_radius)
+        region = extract_region(x_obstacle, y_obstacle, circling_radius)
 
-        return TakePictureResponse(1)
+        return DriveAroundResponse(1)
     else:
         print("Could not find a suitable pose to start from.")
-        return TakePictureResponse(0)
+        return DriveAroundResponse(0)
 
 
-def take_picture_server():
-    rospy.init_node('take_picture', anonymous=True)
+def drive_around_server():
+    rospy.init_node('drive_around', anonymous=True)
     rospy.Subscriber('/eva/scan_mismatches',
                      ScanMismatches, map_callback, queue_size=1)
 
-    s = rospy.Service('/eva/take_picture',
-                      TakePicture, handle_drive_around)
+    s = rospy.Service('/eva/drive_around',
+                      DriveAround, handle_drive_around)
     rospy.spin()
 
 
 if __name__ == "__main__":
-    take_picture_server()
+    drive_around_server()
