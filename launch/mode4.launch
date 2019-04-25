@@ -11,6 +11,7 @@
     <node pkg="eva_a" name="scan_mismatches" type="scan_mismatches.py"/>
     <node pkg="eva_a" name="obstacle_publisher" type="obstacle_publisher.py"/>
     <node pkg="eva_a" name="take_picture_server" type="take_picture_server.py"/>
+    <node pkg="eva_a" name="drive_around_server" type="drive_around_server.py"/>
 
     <param name="/amcl/initial_pose_x" value="1.0" />
     <param name="/amcl/initial_pose_y" value="-3.0" />

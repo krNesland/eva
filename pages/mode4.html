@@ -47,6 +47,16 @@
         <div class="row container">
             <a class="waves-effect waves-light btn-large" onclick="callFollowRoute()">Follow</a>
         </div>
+        <div class="row container">
+            <div class="switch">
+                <label>
+                    Photograh
+                    <input type="checkbox" id="drive-around">
+                    <span class="lever"></span>
+                    Drive Around
+                </label>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Structure -->
@@ -54,7 +64,7 @@
         <div class="modal-content">
             <h4>The Obstacle</h4>
             <div class="row container center">
-                <img id = "obstacle-img" src="../img/captures/capture.jpg"/>
+                <img id="obstacle-img" src="../img/captures/capture.jpg" />
             </div>
         </div>
         <div class="modal-footer">
@@ -73,6 +83,7 @@
     <script type="text/javascript" src="../js/get-position.js"></script>
     <script type="text/javascript" src="../js/send-route.js"></script>
     <script type="text/javascript" src="../js/take-picture.js"></script>
+    <script type="text/javascript" src="../js/drive-around.js"></script>
     <script type="text/javascript" src="../js/enclosing-obstacles.js"></script>
 
 </body>

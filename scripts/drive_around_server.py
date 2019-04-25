@@ -60,13 +60,12 @@ def extract_region(x_obstacle, y_obstacle, circling_radius):
     height = width
     left, bottom = map_to_img(x_obstacle - circling_radius, y_obstacle - circling_radius)
 
-    # Look
     region = obstacle_map[(bottom - height):bottom, left:(left + width)]
     print((left, bottom))
     print(region.shape)
 
-    cv.imshow('obstacle', region)
-    cv.waitKey()
+    # cv.imshow('obstacle', region)
+    # cv.waitKey()
 
     return region
 
@@ -205,10 +204,9 @@ def navigate_to_pose(pose):
 def handle_drive_around(req):
     global obstacle_map
 
-    circling_radius = 0.7
-
     x_obstacle = req.obstaclePosX
     y_obstacle = req.obstaclePosY
+    circling_radius = req.circlingRadius
 
     pose = find_starting_pose(x_obstacle, y_obstacle, circling_radius)
     print(pose)
@@ -221,7 +219,11 @@ def handle_drive_around(req):
         drive_around(circling_radius)
         region = extract_region(x_obstacle, y_obstacle, circling_radius)
 
-        return DriveAroundResponse(1)
+        # Close to fill.
+        se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
+        region_closed = cv.morphologyEx(region, cv.MORPH_CLOSE, se_close)
+
+        return DriveAroundResponse(np.count_nonzero(region_closed))
     else:
         print("Could not find a suitable pose to start from.")
         return DriveAroundResponse(0)

@@ -11,7 +11,12 @@ class Obstacle {
             fillColor: '#700',
             radius: this.radius
         }).addTo(obstacleLayer).on('click', function(e) {
-            callTakePicture(e.latlng);
+            if (document.getElementById("drive-around").checked) {
+                callDriveAround(e.latlng, 0.6);
+            }
+            else {
+                callTakePicture(e.latlng);
+            }
         });
     }
 }
