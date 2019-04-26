@@ -14,8 +14,14 @@ function callDriveAround(obstaclePos, radius) {
     });
     
     driveAroundClient.callService(request, function(result) {
-        if (result.area) {
-            console.log("Area: " + result.area);
+        if (result.success) {
+            var latlngs = [];
+
+            for (var i = 0; i < result.lats.length; i++) {
+                latlngs.push([result.lats[i], result.lngs[i]]);
+            }
+
+            var polygon = L.polygon(latlngs, {color: 'green'}).addTo(map);
         }
         else {
             console.log("Was not able to drive around.");

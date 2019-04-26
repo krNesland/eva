@@ -4,4 +4,6 @@ float64 obstaclePosX
 float64 obstaclePosY
 float64 circlingRadius
 ---
-uint8 area
+uint8 success
+float64[] lats
+float64[] lngs

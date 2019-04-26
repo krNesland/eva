@@ -64,11 +64,38 @@ def extract_region(x_obstacle, y_obstacle, circling_radius):
     print((left, bottom))
     print(region.shape)
 
-    # cv.imshow('obstacle', region)
-    # cv.waitKey()
+    #cv.rectangle(obstacle_map,(left,bottom - height),(left + width,bottom),255,2)
+
+    #cv.imshow('obstacle', obstacle_map)
+    #cv.imshow('region', region)
+    #cv.waitKey(30)
 
     return region
 
+
+def find_boundary(region):
+    # Close to connect.
+    se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
+    region_closed = cv.morphologyEx(region, cv.MORPH_CLOSE, se_close)
+
+    # Find contours.
+    im2, contours, hierarchy = cv.findContours(region_closed, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+    # Find the largest structure (in case there are several structures inside the region).
+    cnt = contours[0]
+    max_area = cv.contourArea(cnt)
+
+    for cont in contours:
+        if cv.contourArea(cont) > max_area:
+            cnt = cont
+            max_area = cv.contourArea(cont)
+
+    approx = cv.approxPolyDP(cnt, 1.0, True)
+
+    print(cnt)
+    print(approx)
+
+    return approx
 
 def free_space(x_map, y_map, region_size):
     global obstacle_map
@@ -136,26 +163,6 @@ def find_starting_pose(x_obstacle, y_obstacle, circling_radius):
         if free_space(x, y, 6):
             possible_poses.append((x, y, theta))
 
-
-    '''
-
-    visualizer = np.zeros((384, 384), dtype=np.uint8)
-    visualizer[obstacle_map > 50] = 50
-
-    obstacleX, obstacleY = map_to_img(x_obstacle, y_obstacle)
-    visualizer[obstacleY][obstacleX] = 250
-
-    for tup in possible_poses:
-        vizX, vizY = map_to_img(tup[0], tup[1])
-        visualizer[vizY][vizX] = 150
-
-    cv.imshow("vizz", visualizer)
-    cv.waitKey()
-
-    '''
-
-
-
     # Just some high value.
     shortest_dist = 1000
 
@@ -219,14 +226,44 @@ def handle_drive_around(req):
         drive_around(circling_radius)
         region = extract_region(x_obstacle, y_obstacle, circling_radius)
 
-        # Close to fill.
-        se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
-        region_closed = cv.morphologyEx(region, cv.MORPH_CLOSE, se_close)
+        if (np.count_nonzero(region) > 0):
+            # Finding simplified boundary.
+            boundary = find_boundary(region)
 
-        return DriveAroundResponse(np.count_nonzero(region_closed))
+            width = int(round(20*2*circling_radius))
+            height = width
+            left, bottom = map_to_img(x_obstacle - circling_radius, y_obstacle - circling_radius)
+
+            lats = []
+            lngs = []
+
+            for b in boundary:
+                # Position of boundary point in the image.
+                x_img = left + b[0][0]
+                y_img = (bottom - height) + b[0][1]
+
+                # On the map.
+                x_map = (x_img - 199)*0.05
+                y_map = (183 - y_img)*0.05
+
+                # In (lat, lng).
+                lat = x_map
+                lng = -y_map
+
+                lats.append(lat)
+                lngs.append(lng)
+
+            print(lats)
+            print(lngs)
+
+        else:
+            print("Empty region.")
+            return DriveAroundResponse(0, [], [])
+
+        return DriveAroundResponse(1, lats, lngs)
     else:
         print("Could not find a suitable pose to start from.")
-        return DriveAroundResponse(0)
+        return DriveAroundResponse(0, [], [])
 
 
 def drive_around_server():
