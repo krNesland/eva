@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_msgs
   cv_bridge
   sensor_msgs
+  actionlib_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -81,6 +82,7 @@ generate_messages(
   std_msgs
   geometry_msgs
   gazebo_msgs
+  actionlib_msgs
 )
 
 ################################################

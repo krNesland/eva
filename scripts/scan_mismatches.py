@@ -102,7 +102,7 @@ def scan_callback(data):
          # Probability of occupied if hit.
         prob_hit = 0.65
         # Probability of occupied if not hit.
-        prob_nhit = 0.35
+        prob_nhit = 0.45
 
     max_range=data.range_max
     min_range=data.range_min

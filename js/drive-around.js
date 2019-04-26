@@ -24,7 +24,7 @@ function callDriveAround(obstaclePos, radius) {
             var polygon = L.polygon(latlngs, {color: 'green'}).addTo(map);
         }
         else {
-            console.log("Was not able to drive around.");
+            console.log("Was not able to investigate obstacle more precisely.");
         }
     });
 }

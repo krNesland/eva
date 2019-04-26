@@ -2,21 +2,37 @@
 
 # Follows the requested route
 
-# Subscribe: /tf
+# Subscribe: /move_base/status
 # Publish: /move_base/goal
 
 import rospy
-import tf
 import roslib
 import math
 
 from eva_a.srv import *
 from move_base_msgs.msg import MoveBaseActionGoal
+from actionlib_msgs.msg import GoalStatusArray
 
 # Could maybe benefit from being implemented as an action and not a server. Actions can report back during execution, not only at the end.
 # Does not currently return an error if the route is cancelled.
 
+def callback(data):
+    global reached_goal
+    global seq_id
+
+    for s in data.status_list:
+        if "follow_route_goal_" + str(seq_id) in s.goal_id.id:
+            if s.status == 3:
+                reached_goal = True
+                print("ready")
+            else:
+                reached_goal = False
+                print("not ready")
+
+
 def handle_follow_route(req):
+    reached_goal = False
+    seq_id = 0
 
     print("FollowRoute received a new route.")
 
@@ -30,7 +46,6 @@ def handle_follow_route(req):
 
     finished = False
     waypoints = []
-    dist = 1.0
 
     # Building up the list of commands.
     for i in range(len(req.latVec)):
@@ -46,47 +61,58 @@ def handle_follow_route(req):
 
         waypoints.append((x, y, angle))
 
-    listener = tf.TransformListener()
-    pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=10)
+    pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=1)
 
     now_goal = waypoints.pop(0)
     now_msg = MoveBaseActionGoal()
     now_msg.goal.target_pose.header.frame_id = "map"
+    now_msg.goal_id.id = "follow_route_goal_" + str(seq_id)
     now_msg.goal.target_pose.pose.position.x = now_goal[0]
     now_msg.goal.target_pose.pose.position.y = now_goal[1]
-    now_msg.goal.target_pose.pose.orientation.w = 1.0
+    now_msg.goal.target_pose.pose.orientation.z = math.sin(now_goal[2]/2)
+    now_msg.goal.target_pose.pose.orientation.w = math.cos(now_goal[2]/2)
 
     rospy.sleep(0.5)
     pub.publish(now_msg)
+    pub.publish(now_msg)
 
-    rate = rospy.Rate(10.0)
     while (not rospy.is_shutdown()) and (not finished):
-        try:
-            (trans,rot) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
-            # Current position of robot.
-            now_pos = (trans[0], trans[1])
-            # Distance to waypoint.
-            dist = math.sqrt((now_pos[0] - now_goal[0])**2 + (now_pos[1] - now_goal[1])**2)
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
 
-        # If close enough to waypoint, we head towards the next waypoint.
-        if dist < 0.1:
+        data = rospy.wait_for_message("move_base/status", GoalStatusArray)
+
+        for s in data.status_list:
+            if "follow_route_goal_" + str(seq_id) in s.goal_id.id:
+                if s.status == 3:
+                    reached_goal = True
+                    print("ready")
+                else:
+                    reached_goal = False
+                    print("not ready")
+
+        if reached_goal:
             if not len(waypoints) < 1:
+                seq_id = seq_id + 1
+
                 now_goal = waypoints.pop(0)
+                now_msg = MoveBaseActionGoal()
+                now_msg.goal.target_pose.header.frame_id = "map"
+                now_msg.goal_id.id = "follow_route_goal_" + str(seq_id)
                 now_msg.goal.target_pose.pose.position.x = now_goal[0]
                 now_msg.goal.target_pose.pose.position.y = now_goal[1]
                 # Orientation as quaternion.
                 now_msg.goal.target_pose.pose.orientation.z = math.sin(now_goal[2]/2)
                 now_msg.goal.target_pose.pose.orientation.w = math.cos(now_goal[2]/2)
+                rospy.sleep(0.5)
                 pub.publish(now_msg)
+                pub.publish(now_msg)
+                ready_for_next = False
                 print("FollowRoute is heading for next waypoint.")
+                # Giving it some time to publish the new goal before checking the status.
+                rospy.sleep(2.0)
             else:
                 finished = True
                 print("FollowRoute finished.")
-
-        rate.sleep()
-
+                seq_id = seq_id + 1
 
     rospy.sleep(1.0)
     return FollowRouteResponse(1) # 1 if success.
@@ -95,6 +121,7 @@ def follow_route_server():
 
     rospy.init_node('follow_route_server')
     print("FollowRoute service waiting for call...")
+    #rospy.Subscriber("move_base/status", GoalStatusArray, callback, queue_size=1)
     s = rospy.Service('/eva/follow_route', FollowRoute, handle_follow_route)
     rospy.spin()
 

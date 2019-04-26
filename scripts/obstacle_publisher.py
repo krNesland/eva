@@ -43,8 +43,8 @@ def find_obstacles():
         
     except:
         print("Unable to load morphology parameters.")
-        close_radius = 3
-        open_radius = 3
+        close_radius = 5
+        open_radius = 2
         min_obstacle_area = 5
 
     # Threshold.
@@ -56,7 +56,7 @@ def find_obstacles():
 
     # Open to remove thin structures and small grains.
     se_open = cv.getStructuringElement(cv.MORPH_ELLIPSE, (open_radius, open_radius))
-    opened = cv.morphologyEx(closed, cv.MORPH_CLOSE, se_open)
+    opened = cv.morphologyEx(closed, cv.MORPH_OPEN, se_open)
 
     # Find contours.
     im2, contours, hierarchy = cv.findContours(opened, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
@@ -66,17 +66,7 @@ def find_obstacles():
     # Filtering out some of the contours that are unlikely to be obstacles.
     for cnt in contours:
         # Not interested in lines.
-        if len(cnt) < 5:
-            continue
-
-        # Not interested in very small areas.
-        if cv.contourArea(cnt) < min_obstacle_area:
-            continue
-
-        ellipse = cv.fitEllipse(cnt)
-
-        # If way too large for an obstacle.
-        if ellipse[1][0] > 20 or ellipse[1][1] > 20:
+        if len(cnt) < 4:
             continue
 
         obst = Obstacle(cnt)
