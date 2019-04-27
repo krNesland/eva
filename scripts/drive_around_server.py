@@ -15,33 +15,18 @@ from eva_a.msg import *
 from eva_a.srv import *
 from move_base_msgs.msg import MoveBaseActionGoal
 from geometry_msgs.msg import Twist
+from actionlib_msgs.msg import GoalStatusArray
 
 
 obstacle_map = np.zeros((384, 384), dtype=np.uint8)
-robot_pose = [0.0, 0.0, 0.0]
+seq_id = 0
 
 def map_callback(data):
     global obstacle_map
-    global robot_pose
 
     obstacle_data = np.array(data.data, dtype=np.uint8)
     obstacle_map = np.reshape(obstacle_data, (data.height, data.width))
     ret, obstacle_map = cv.threshold(obstacle_map, 150, 255, cv.THRESH_BINARY)
-
-    # Update pose.
-    tf_listener=tf.TransformListener()
-
-    while not rospy.is_shutdown():
-        try:
-            (trans, rot)=tf_listener.lookupTransform(
-                '/map', '/base_footprint', rospy.Time(0))
-            robot_pose[0]=trans[0]
-            robot_pose[1]=trans[1]
-            # Quaternion to theta angle.
-            robot_pose[2]=math.atan2(
-                2*(rot[0]*rot[1] + rot[2]*rot[3]), 1 - 2*(rot[1]*rot[1] + rot[2]*rot[2]))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
 
 
 # Converting from map coordinates to coordinates of obstacle_map.
@@ -147,7 +132,6 @@ def drive_around(radius):
 # Almost identical to find_capturing_pose().
 def find_starting_pose(x_obstacle, y_obstacle, circling_radius):
     global obstacle_map
-    global robot_pose
 
     step = (2*math.pi)/10
     possible_poses = []
@@ -157,18 +141,36 @@ def find_starting_pose(x_obstacle, y_obstacle, circling_radius):
 
         x = x_obstacle + circling_radius*math.cos(angle)
         y = y_obstacle + circling_radius*math.sin(angle)
+        # Parallell to the circumference of the circle.
         theta = angle - math.pi - (math.pi/2)
 
         # If a 12x12 px area unoccupied around.
         if free_space(x, y, 6):
             possible_poses.append((x, y, theta))
 
+    # Find current pose.
+    tf_listener=tf.TransformListener()
+    robot_pos = [0.0, 0.0]
+
+    found_pose = False
+    
+    while not found_pose:
+        try:
+            (trans, rot)=tf_listener.lookupTransform(
+                '/map', '/base_footprint', rospy.Time(0))
+            robot_pos[0]=trans[0]
+            robot_pos[1]=trans[1]
+
+            found_pose = True
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
     # Just some high value.
     shortest_dist = 1000
 
     # Finding the closest capturing position from where the robot is currently at.
     for pose in possible_poses:
-        dist = math.sqrt((robot_pose[0] - pose[0])**2 + (robot_pose[1] - pose[1])**2)
+        dist = math.sqrt((robot_pos[0] - pose[0])**2 + (robot_pos[1] - pose[1])**2)
 
         if dist < shortest_dist:
             selected_pose = pose
@@ -181,11 +183,12 @@ def find_starting_pose(x_obstacle, y_obstacle, circling_radius):
 
 
 def navigate_to_pose(pose):
-    global robot_pose
+    global seq_id
 
     pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=10)
     msg = MoveBaseActionGoal()
     msg.goal.target_pose.header.frame_id = "map"
+    msg.goal_id.id = "drive_around_goal_" + str(seq_id)
     msg.goal.target_pose.pose.position.x = pose[0]
     msg.goal.target_pose.pose.position.y = pose[1]
     # Orientation as a quaternion.
@@ -195,18 +198,21 @@ def navigate_to_pose(pose):
     rospy.sleep(0.5)
     pub.publish(msg)
 
-    # Close enough to the wanted pose yet?
-    finished = False
+    reached_goal = False
+    rate = rospy.Rate(2.0)
 
-    while (not rospy.is_shutdown()) and (not finished):
-        dist = dist = math.sqrt((robot_pose[0] - pose[0])**2 + (robot_pose[1] - pose[1])**2)
+    while (not rospy.is_shutdown()) and (not reached_goal):
 
-        if dist < 0.1:
-            finished = True
+        data = rospy.wait_for_message("move_base/status", GoalStatusArray)
 
-        rospy.sleep(1.0)
-    
-    rospy.sleep(1.0)
+        for s in data.status_list:
+            if "drive_around_goal_" + str(seq_id) in s.goal_id.id:
+                if s.status == 3:
+                    reached_goal = True
+
+        rate.sleep()
+
+    seq_id = seq_id + 1
 
 def handle_drive_around(req):
     global obstacle_map
@@ -220,8 +226,6 @@ def handle_drive_around(req):
 
     if len(pose) > 0:
         navigate_to_pose(pose)
-
-        rospy.sleep(1)
 
         drive_around(circling_radius)
         region = extract_region(x_obstacle, y_obstacle, circling_radius)

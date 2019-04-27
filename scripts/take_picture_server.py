@@ -19,31 +19,16 @@ from move_base_msgs.msg import MoveBaseActionGoal
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist
+from actionlib_msgs.msg import GoalStatusArray
 
 
 map_data = np.zeros((384, 384), dtype=np.int8)
-robot_pose = [0.0, 0.0, 0.0]
+seq_id = 0
 
 def map_callback(data):
     global map_data
-    global robot_pose
 
     map_data = np.flipud(np.reshape(data.data, (data.info.height, data.info.width)).astype(np.int8))
-
-    # Update pose.
-    tf_listener=tf.TransformListener()
-
-    while not rospy.is_shutdown():
-        try:
-            (trans, rot)=tf_listener.lookupTransform(
-                '/map', '/base_footprint', rospy.Time(0))
-            robot_pose[0]=trans[0]
-            robot_pose[1]=trans[1]
-            # Quaternion to theta angle.
-            robot_pose[2]=math.atan2(
-                2*(rot[0]*rot[1] + rot[2]*rot[3]), 1 - 2*(rot[1]*rot[1] + rot[2]*rot[2]))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
 
 
 # Converting from map coordinates to coordinates of map_data.
@@ -84,7 +69,6 @@ def free_space(x_map, y_map, region_size):
 
 def find_capturing_pose(x_obstacle, y_obstacle):
     global map_data
-    global robot_pose
 
     step = (2*math.pi)/10
     possible_poses = []
@@ -118,14 +102,29 @@ def find_capturing_pose(x_obstacle, y_obstacle):
 
     '''
 
+    # Find current pose.
+    tf_listener=tf.TransformListener()
+    robot_pos = [0.0, 0.0]
 
+    found_pose = False
+    
+    while not found_pose:
+        try:
+            (trans, rot)=tf_listener.lookupTransform(
+                '/map', '/base_footprint', rospy.Time(0))
+            robot_pos[0]=trans[0]
+            robot_pos[1]=trans[1]
+
+            found_pose = True
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
 
     # Just some high value.
     shortest_dist = 1000
 
     # Finding the closest capturing position from where the robot is currently at.
     for pose in possible_poses:
-        dist = math.sqrt((robot_pose[0] - pose[0])**2 + (robot_pose[1] - pose[1])**2)
+        dist = math.sqrt((robot_pos[0] - pose[0])**2 + (robot_pos[1] - pose[1])**2)
 
         if dist < shortest_dist:
             selected_pose = pose
@@ -138,11 +137,12 @@ def find_capturing_pose(x_obstacle, y_obstacle):
 
 
 def navigate_to_pose(pose):
-    global robot_pose
+    global seq_id
 
     pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=10)
     msg = MoveBaseActionGoal()
     msg.goal.target_pose.header.frame_id = "map"
+    msg.goal_id.id = "take_picture_goal_" + str(seq_id)
     msg.goal.target_pose.pose.position.x = pose[0]
     msg.goal.target_pose.pose.position.y = pose[1]
     # Orientation as a quaternion.
@@ -152,18 +152,22 @@ def navigate_to_pose(pose):
     rospy.sleep(0.5)
     pub.publish(msg)
 
-    # Close enough to the wanted pose yet?
-    finished = False
+    reached_goal = False
+    rate = rospy.Rate(2.0)
 
-    while (not rospy.is_shutdown()) and (not finished):
-        dist = dist = math.sqrt((robot_pose[0] - pose[0])**2 + (robot_pose[1] - pose[1])**2)
+    while (not rospy.is_shutdown()) and (not reached_goal):
 
-        if dist < 0.1:
-            finished = True
+        data = rospy.wait_for_message("move_base/status", GoalStatusArray)
 
-        rospy.sleep(1.0)
-    
-    rospy.sleep(1.0)
+        for s in data.status_list:
+            if "take_picture_goal_" + str(seq_id) in s.goal_id.id:
+                if s.status == 3:
+                    reached_goal = True
+
+        rate.sleep()
+
+
+    seq_id = seq_id + 1
 
 def handle_take_picture(req):
     global map_data
@@ -177,6 +181,9 @@ def handle_take_picture(req):
     if len(pose) > 0:
         navigate_to_pose(pose)
 
+        # Several times in order to force the newest image.
+        data = rospy.wait_for_message("/camera/rgb/image_raw/compressed", CompressedImage)
+        data = rospy.wait_for_message("/camera/rgb/image_raw/compressed", CompressedImage)
         data = rospy.wait_for_message("/camera/rgb/image_raw/compressed", CompressedImage)
 
         bridge = CvBridge()
@@ -186,6 +193,9 @@ def handle_take_picture(req):
         img_path = path.join(rospack.get_path('eva_a'), 'img', 'captures', 'capture.jpg')
         cv.imwrite(img_path, cv_image)
         print("Image stored: " + img_path)
+        
+        # Give it some time to store the image.
+        rospy.sleep(1.0)
 
         return TakePictureResponse(1)
     else:
