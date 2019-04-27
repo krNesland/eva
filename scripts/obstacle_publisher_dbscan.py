@@ -169,7 +169,7 @@ class Obstacle:
         self.points.append((x, y))
 
     def draw(self, canvas):
-        cv.circle(canvas, self.center, self.radius, 255, 1)
+        cv.circle(canvas, self.center, 10, 255, 1)
 
     def get_lat(self, resolution):
         x_sum = 0
@@ -188,10 +188,6 @@ class Obstacle:
 
         # Average position.
         return (y_sum/len(self.points) - 183)*resolution
-
-    def get_radius(self, resolution):
-        # Approximating as circle.
-        return (np.sqrt(len(self.points))/3.14)*resolution
 
 def find_obstacles():
     global obstacle_map
@@ -248,18 +244,15 @@ def talker():
             msg.numObstacles = len(obstacle_array)
             msg.latCenters = []
             msg.lngCenters = []
-            msg.radii = []
 
             for obstacle in obstacle_array:
                 msg.latCenters.append(obstacle.get_lat(resolution))
                 msg.lngCenters.append(obstacle.get_lng(resolution))
-                msg.radii.append(obstacle.get_radius(resolution))
 
         else:
             msg.numObstacles = 0
             msg.latCenters = []
             msg.lngCenters = []
-            msg.radii = []
 
         pub.publish(msg)
         rate.sleep()

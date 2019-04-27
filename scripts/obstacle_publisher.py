@@ -17,21 +17,21 @@ obstacle_map = np.zeros((384, 384), dtype=np.uint8)
 class Obstacle:
     def __init__(self, cnt):
         self.cnt = cnt
-        (x, y), radius = cv.minEnclosingCircle(cnt)
-        self.center = (int(x), int(y))
-        self.radius = int(radius)
+
+        # Finding centroid.
+        M = cv.moments(cnt)
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        self.center = (cx, cy)
 
     def draw(self, canvas):
-        cv.circle(canvas, self.center, self.radius, 255, 1)
+        cv.circle(canvas, self.center, 10, 255, 1)
 
     def get_lat(self, resolution):
         return (self.center[0] - 199)*resolution
 
     def get_lng(self, resolution):
         return (self.center[1] - 183)*resolution
-
-    def get_radius(self, resolution):
-        return self.radius*resolution
 
 def find_obstacles():
     global obstacle_map
@@ -93,18 +93,15 @@ def talker():
             msg.numObstacles = len(obstacle_array)
             msg.latCenters = []
             msg.lngCenters = []
-            msg.radii = []
 
             for obstacle in obstacle_array:
                 msg.latCenters.append(obstacle.get_lat(resolution))
                 msg.lngCenters.append(obstacle.get_lng(resolution))
-                msg.radii.append(obstacle.get_radius(resolution))
 
         else:
             msg.numObstacles = 0
             msg.latCenters = []
             msg.lngCenters = []
-            msg.radii = []
 
         pub.publish(msg)
         rate.sleep()

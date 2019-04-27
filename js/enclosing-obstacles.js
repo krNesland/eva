@@ -1,15 +1,13 @@
 class Obstacle {
-    constructor(latCenter, lngCenter, radius) {
+    constructor(latCenter, lngCenter) {
         this.latCenter = latCenter;
         this.lngCenter = lngCenter;
-        this.radius = radius*70;
     }
 
     draw() {
         L.circleMarker([this.latCenter, this.lngCenter], {
             color: 'red',
-            fillColor: '#700',
-            radius: this.radius
+            fillColor: '#700'
         }).addTo(obstacleLayer).on('click', function(e) {
             if (document.getElementById("drive-around").checked) {
                 callDriveAround(e.latlng, 0.6);
@@ -32,7 +30,7 @@ listener.subscribe(function (message) {
     var obstacles = [];
 
     for (var i = 0; i < message.numObstacles; i++) {
-        obstacles.push(new Obstacle(message.latCenters[i], message.lngCenters[i], message.radii[i]));
+        obstacles.push(new Obstacle(message.latCenters[i], message.lngCenters[i]));
     }
 
     for (var j = 0; j < message.numObstacles; j++) {
