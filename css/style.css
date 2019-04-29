@@ -28,6 +28,7 @@
     background-size: 1920px 200px;
     height: 100px;
     width: 100%;
+    filter: brightness(50%);
 }
 
 .nav-wrapper {

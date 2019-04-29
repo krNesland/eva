@@ -11,24 +11,11 @@ import math
 
 from eva_a.srv import *
 from move_base_msgs.msg import MoveBaseActionGoal
-from actionlib_msgs.msg import GoalStatusArray
+from actionlib_msgs.msg import GoalStatusArray, GoalID
+from std_msgs.msg import UInt32
 
 # Could maybe benefit from being implemented as an action and not a server. Actions can report back during execution, not only at the end.
 # Does not currently return an error if the route is cancelled.
-
-def callback(data):
-    global reached_goal
-    global seq_id
-
-    for s in data.status_list:
-        if "follow_route_goal_" + str(seq_id) in s.goal_id.id:
-            if s.status == 3:
-                reached_goal = True
-                print("ready")
-            else:
-                reached_goal = False
-                print("not ready")
-
 
 def handle_follow_route(req):
     reached_goal = False
@@ -61,6 +48,8 @@ def handle_follow_route(req):
 
         waypoints.append((x, y, angle))
 
+    waypoint_pub = rospy.Publisher('/eva/curr_waypoint', UInt32, queue_size=1)
+
     pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=1)
 
     now_goal = waypoints.pop(0)
@@ -79,15 +68,18 @@ def handle_follow_route(req):
     while (not rospy.is_shutdown()) and (not finished):
 
         data = rospy.wait_for_message("move_base/status", GoalStatusArray)
+        print(seq_id)
 
         for s in data.status_list:
             if "follow_route_goal_" + str(seq_id) in s.goal_id.id:
+                if s.status == 6:
+                    print("Follow route was cancelled.")
+                    return FollowRouteResponse(0)
+
                 if s.status == 3:
                     reached_goal = True
-                    print("ready")
                 else:
                     reached_goal = False
-                    print("not ready")
 
         if reached_goal:
             if not len(waypoints) < 1:
@@ -107,6 +99,9 @@ def handle_follow_route(req):
                 pub.publish(now_msg)
                 ready_for_next = False
                 print("FollowRoute is heading for next waypoint.")
+
+                waypoint_pub.publish(seq_id)
+
                 # Giving it some time to publish the new goal before checking the status.
                 rospy.sleep(2.0)
             else:
@@ -121,7 +116,6 @@ def follow_route_server():
 
     rospy.init_node('follow_route_server')
     print("FollowRoute service waiting for call...")
-    #rospy.Subscriber("move_base/status", GoalStatusArray, callback, queue_size=1)
     s = rospy.Service('/eva/follow_route', FollowRoute, handle_follow_route)
     rospy.spin()
 

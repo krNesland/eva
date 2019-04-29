@@ -6,6 +6,8 @@ var navTopic = new ROSLIB.Topic({
     messageType : 'move_base_msgs/MoveBaseActionGoal'
 });
 
+var seqId = 0;
+
 // At click of map.
 function publishGoal(latlng) {
 
@@ -31,11 +33,15 @@ function publishGoal(latlng) {
                     }
                 }
             }
+        },
+        goal_id: {
+            id: 'clickMapGoal_' + seqId
         }
     });
 
     // And finally, publish.
     navTopic.publish(navMsg);
+    seqId = seqId + 1;
 
     console.log("Sent message to navigate to (" + latlng.lat + ", " + latlng.lng + ").");
 }
