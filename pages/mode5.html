@@ -40,18 +40,14 @@
         </div>
 
         <div class="row container">
-            <a class="waves-effect waves-light btn-large" onclick="callFollowRoute()">Follow</a>
-            <a class="waves-effect waves-light btn-large" onclick="cancelNav()">cancel</a>
-        </div>
-
-        <div class="row container">
             <div class="col m6">
-                <img src="http://localhost:8080/stream?topic=/camera/rgb/image_raw">
-                <form action="#">
+                <img style="width: 480px;" src="http://localhost:8080/stream?topic=/camera/rgb/image_raw">
+                <form action="#" style="width: 480px;">
                     <p class="range-field">
                         <input type="range" id="vel_slider" min="0" max="100" />
                     </p>
                 </form>
+                <a class="waves-effect waves-light btn-large" id="following-btn" onclick="toggleFollowing()">Follow</a>
             </div>
             <div class="col m6">
                 <div id="map"></div>

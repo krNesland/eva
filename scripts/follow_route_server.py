@@ -17,7 +17,12 @@ from std_msgs.msg import UInt32
 # Could maybe benefit from being implemented as an action and not a server. Actions can report back during execution, not only at the end.
 # Does not currently return an error if the route is cancelled.
 
+call_nr = -1
+
 def handle_follow_route(req):
+    global call_nr
+    call_nr = call_nr + 1
+
     reached_goal = False
     curr_waypoint = req.startFrom
 
@@ -55,7 +60,7 @@ def handle_follow_route(req):
     now_goal = waypoints.pop(0)
     now_msg = MoveBaseActionGoal()
     now_msg.goal.target_pose.header.frame_id = "map"
-    now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint)
+    now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint) + "_" + str(call_nr)
     now_msg.goal.target_pose.pose.position.x = now_goal[0]
     now_msg.goal.target_pose.pose.position.y = now_goal[1]
     now_msg.goal.target_pose.pose.orientation.z = math.sin(now_goal[2]/2)
@@ -88,7 +93,7 @@ def handle_follow_route(req):
                 now_goal = waypoints.pop(0)
                 now_msg = MoveBaseActionGoal()
                 now_msg.goal.target_pose.header.frame_id = "map"
-                now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint)
+                now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint) + "_" + str(call_nr)
                 now_msg.goal.target_pose.pose.position.x = now_goal[0]
                 now_msg.goal.target_pose.pose.position.y = now_goal[1]
                 # Orientation as quaternion.

@@ -1,5 +1,26 @@
 
+// Either following or teleoperating.
+var following = 0;
+
+function toggleFollowing() {
+    if (following) {
+        following = 0;
+        document.getElementById("following-btn").innerText = "follow";
+        document.getElementById("following-btn").classList.remove("red");
+        document.getElementById("following-btn").classList.remove("darken-4");
+        cancelNav();
+    }
+    else {
+        following = 1;
+        document.getElementById("following-btn").innerText = "teleoperate";
+        document.getElementById("following-btn").classList.add("red");
+        document.getElementById("following-btn").classList.add("darken-4");
+        callFollowRoute();
+    }
+}
+
 var currWaypoint = 0;
+var callNr = -1;
 
 // Listening to the current waypoint.
 
@@ -24,10 +45,9 @@ var cancelTopic = new ROSLIB.Topic({
 function cancelNav() {
 
     var cancelMsg = new ROSLIB.Message({
-        id: 'follow_route_goal_' + currWaypoint
+        id: 'follow_route_goal_' + currWaypoint + '_' + callNr
     });
 
-    // And finally, publish.
     cancelTopic.publish(cancelMsg);
 
     console.log("Canceled goal: " + currWaypoint);
@@ -45,6 +65,7 @@ var lats = [3.3, 5.3, 2.4, 2.4, 0.5];
 var lngs = [2.9, 2.0, 0.6, 2.3, 2.9];
 
 function callFollowRoute() {
+    callNr = callNr + 1;
 
     if (currWaypoint < lats.length) {
         console.log("Trying to call FollowRoute from waypoint " + currWaypoint + ".");
@@ -58,6 +79,11 @@ function callFollowRoute() {
             if (result.currWaypoint == 100) {
                 console.log("Successfully completed the route.");
                 currWaypoint = 0;
+
+                following = 0;
+                document.getElementById("following-btn").innerText = "follow";
+                document.getElementById("following-btn").classList.remove("red");
+                document.getElementById("following-btn").classList.remove("darken-4");
             }
             else {
                 console.log("Route was cancelled on the way to waypoint: " + result.currWaypoint + ".");
