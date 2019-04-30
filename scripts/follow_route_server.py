@@ -19,9 +19,10 @@ from std_msgs.msg import UInt32
 
 def handle_follow_route(req):
     reached_goal = False
-    seq_id = 0
+    curr_waypoint = req.startFrom
 
     print("FollowRoute received a new route.")
+    print(req)
 
     if len(req.latVec) < 1:
         print("A route must have at least one waypoint.")
@@ -35,7 +36,7 @@ def handle_follow_route(req):
     waypoints = []
 
     # Building up the list of commands.
-    for i in range(len(req.latVec)):
+    for i in range(curr_waypoint, len(req.latVec)):
         x = req.latVec[i]
         y = -req.lngVec[i]
         angle = 0.0
@@ -48,14 +49,13 @@ def handle_follow_route(req):
 
         waypoints.append((x, y, angle))
 
-    waypoint_pub = rospy.Publisher('/eva/curr_waypoint', UInt32, queue_size=1)
-
     pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=1)
+    waypoint_pub = rospy.Publisher('/eva/curr_waypoint', UInt32, queue_size=1)
 
     now_goal = waypoints.pop(0)
     now_msg = MoveBaseActionGoal()
     now_msg.goal.target_pose.header.frame_id = "map"
-    now_msg.goal_id.id = "follow_route_goal_" + str(seq_id)
+    now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint)
     now_msg.goal.target_pose.pose.position.x = now_goal[0]
     now_msg.goal.target_pose.pose.position.y = now_goal[1]
     now_msg.goal.target_pose.pose.orientation.z = math.sin(now_goal[2]/2)
@@ -68,13 +68,13 @@ def handle_follow_route(req):
     while (not rospy.is_shutdown()) and (not finished):
 
         data = rospy.wait_for_message("move_base/status", GoalStatusArray)
-        print(seq_id)
+        waypoint_pub.publish(curr_waypoint)
 
         for s in data.status_list:
-            if "follow_route_goal_" + str(seq_id) in s.goal_id.id:
+            if "follow_route_goal_" + str(curr_waypoint) in s.goal_id.id:
                 if s.status == 6:
                     print("Follow route was cancelled.")
-                    return FollowRouteResponse(0)
+                    return FollowRouteResponse(curr_waypoint)
 
                 if s.status == 3:
                     reached_goal = True
@@ -83,12 +83,12 @@ def handle_follow_route(req):
 
         if reached_goal:
             if not len(waypoints) < 1:
-                seq_id = seq_id + 1
+                curr_waypoint = curr_waypoint + 1
 
                 now_goal = waypoints.pop(0)
                 now_msg = MoveBaseActionGoal()
                 now_msg.goal.target_pose.header.frame_id = "map"
-                now_msg.goal_id.id = "follow_route_goal_" + str(seq_id)
+                now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint)
                 now_msg.goal.target_pose.pose.position.x = now_goal[0]
                 now_msg.goal.target_pose.pose.position.y = now_goal[1]
                 # Orientation as quaternion.
@@ -99,18 +99,16 @@ def handle_follow_route(req):
                 pub.publish(now_msg)
                 ready_for_next = False
                 print("FollowRoute is heading for next waypoint.")
-
-                waypoint_pub.publish(seq_id)
+                print(curr_waypoint)
 
                 # Giving it some time to publish the new goal before checking the status.
                 rospy.sleep(2.0)
             else:
                 finished = True
                 print("FollowRoute finished.")
-                seq_id = seq_id + 1
 
     rospy.sleep(1.0)
-    return FollowRouteResponse(1) # 1 if success.
+    return FollowRouteResponse(100) # 100 if success.
 
 def follow_route_server():
 

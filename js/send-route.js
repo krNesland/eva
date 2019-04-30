@@ -10,7 +10,8 @@ function callFollowRoute() {
     console.log("Trying to call FollowRoute.");
     var request = new ROSLIB.ServiceRequest({
         latVec : [3.3, 5.3, 2.4, 2.4, 0.5],
-        lngVec : [2.9, 2.0, 0.6, 2.3, 2.9]
+        lngVec : [2.9, 2.0, 0.6, 2.3, 2.9],
+        startFrom: 0
     });
     
     followRouteClient.callService(request, function(result) {

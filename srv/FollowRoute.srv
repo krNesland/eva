@@ -2,5 +2,6 @@
 
 float64[] latVec
 float64[] lngVec
+uint32 startFrom
 ---
-uint8 success
+uint32 currWaypoint
