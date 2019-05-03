@@ -6,9 +6,9 @@
     </include>
 
     <!-- A ground plane -->
-    <!--include>
+    <include>
       <uri>model://ground_plane</uri>
-    </include-->
+    </include>
 
     <physics type="ode">
       <real_time_update_rate>1000.0</real_time_update_rate>
@@ -33,7 +33,7 @@
 
     <!-- Load world -->
     <include>
-      <uri>model://turtlebot3_eva_b</uri>
+      <uri>/home/mtp/catkin_ws/src/eva_a/models/vg12</uri>
     </include>
 
     <scene>
