@@ -27,11 +27,11 @@ obstacle_map = np.zeros((384, 384), dtype = np.float32)
 # The occupancy grid. Just a random size for initialization.
 pub = rospy.Publisher('/eva/scan_mismatches', ScanMismatches, queue_size=10)
 
-def map_to_img(x_map, y_map):
-    x_image = int(round(20*x_map + 200)) - 1
-    y_image = int(round(-20*y_map + 184)) - 1
+def map_to_img(x, y):
+    u = int(round(20*x + 200)) - 1
+    v = int(round(-20*y + 184)) - 1
 
-    return (x_image, y_image)
+    return (u, v)
 
 # Loading the map ans setting some parameters
 def map_callback(data):
@@ -115,7 +115,8 @@ def scan_callback(data):
     robot_x=now_pose[0]
     robot_y=now_pose[1]
 
-    image_x, image_y = map_to_img(robot_x, robot_y)
+    # Starting point of line in image (not u0 and v0 of the camera model).
+    u0, v0 = map_to_img(robot_x, robot_y)
 
     # Angle is the angle of the ray relative to the robot. Looping through all.
     for i, angle in enumerate(np.arange(angle_min, angle_max, angle_inc, dtype=np.float32)):
@@ -141,39 +142,39 @@ def scan_callback(data):
         slope=math.tan(image_theta)
 
         # Starting point for line.
-        x=image_x
-        y=image_y
+        u=u0
+        v=v0
 
         # Choosing values depending on octant.
         if image_theta > (3/4.0)*math.pi:  # 4
             inc=-1
-            x_axis=True
+            u_axis=True
         elif image_theta > (2/4.0)*math.pi:  # 3
             inc=1
-            x_axis=False
+            u_axis=False
         elif image_theta > (1/4.0)*math.pi:  # 2
             inc=1
-            x_axis=False
+            u_axis=False
         elif image_theta > (0/4.0)*math.pi:  # 1
             inc=1
-            x_axis=True
+            u_axis=True
         elif image_theta > (-1/4.0)*math.pi:  # 8
             inc=1
-            x_axis=True
+            u_axis=True
         elif image_theta > (-2/4.0)*math.pi:  # 7
             inc=-1
-            x_axis=False
+            u_axis=False
         elif image_theta > (-3/4.0)*math.pi:  # 6
             inc=-1
-            x_axis=False
+            u_axis=False
         else:  # 5
             inc=-1
-            x_axis=True
+            u_axis=True
 
         # Tracing until border of map.
-        while x < map_width and x >= 0 and y < map_height and y >= 0:
+        while u < map_width and u >= 0 and v < map_height and v >= 0:
             map_range=math.sqrt(
-                (x - image_x)*(x - image_x) + (y - image_y)*(y - image_y))*resolution
+                (u - u0)*(u - u0) + (v - v0)*(v - v0))*resolution
 
             if map_range > max_range:
                 break
@@ -181,20 +182,19 @@ def scan_callback(data):
             # If the laser scan stops earlier than expected from the map.
             if map_range > scan_range:
                 update = math.log10(prob_hit/(1 - prob_hit))
-                obstacle_map[y][x] = obstacle_map[y][x] + update
+                obstacle_map[v][u] = obstacle_map[v][u] + update
 
                 break
             else:
                 update = math.log10(prob_nhit/(1 - prob_nhit))
-                obstacle_map[y][x] = obstacle_map[y][x] + update
+                obstacle_map[v][u] = obstacle_map[v][u] + update
 
-            if x_axis:
-                x=x + inc
-                y=image_y + int(round(slope*(x - image_x)))
+            if u_axis:
+                u=u + inc
+                v=v0 + int(round(slope*(u - u0)))
             else:
-                y=y + inc
-                x=image_x + int(round((y - image_y)/slope))
-        
+                v=v + inc
+                u=u0 + int(round((v - v0)/slope))
 
     obstacle_map[obstacle_map < -2] = -2
     obstacle_map[obstacle_map > 2] = 2

@@ -61,8 +61,8 @@ var followRouteClient = new ROSLIB.Service({
     serviceType : 'eva_a/FollowRoute'
 });
 
-var lats = [3.3, 5.3, 2.4, 2.4, 0.5];
-var lngs = [2.9, 2.0, 0.6, 2.3, 2.9];
+var lats = [-2.2, -1.3, -2.1, 0.2, 2.4, 0.0];
+var lngs = [-0.3, 2.9, 4.3, 5.4, -1.0, 0.0];
 
 function callFollowRoute() {
     callNr = callNr + 1;

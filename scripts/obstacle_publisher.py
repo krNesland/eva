@@ -27,11 +27,11 @@ class Obstacle:
     def draw(self, canvas):
         cv.circle(canvas, self.center, 10, 255, 1)
 
-    def get_lat(self, resolution):
+    def get_lng(self, resolution):
         return (self.center[0] - 199)*resolution
 
-    def get_lng(self, resolution):
-        return (self.center[1] - 183)*resolution
+    def get_lat(self, resolution):
+        return (-self.center[1] + 183)*resolution
 
 def find_obstacles():
     global obstacle_map

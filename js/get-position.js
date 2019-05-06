@@ -29,7 +29,7 @@ var robotIcon = L.icon({
 var robotMarker = L.marker([1.5, 1.5], {icon: robotIcon}).addTo(map);
 
 tfClient.subscribe('base_footprint', function(tf) {
-    robotMarker.setLatLng(L.latLng(tf.translation.x, -tf.translation.y));
+    robotMarker.setLatLng(L.latLng(tf.translation.y, tf.translation.x));
 });
 
 var goalListener = new ROSLIB.Topic({
@@ -44,8 +44,8 @@ var goalMarker = L.marker([goalLat, goalLng]).addTo(map);
 
 
 goalListener.subscribe(function(message) {
-    goalLat = message.goal.target_pose.pose.position.x
-    goalLng = - message.goal.target_pose.pose.position.y
+    goalLat = message.goal.target_pose.pose.position.y;
+    goalLng = message.goal.target_pose.pose.position.x;
     
     goalMarker.setLatLng(L.latLng(goalLat, goalLng));
 });

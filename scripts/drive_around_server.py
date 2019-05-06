@@ -251,8 +251,8 @@ def handle_drive_around(req):
                 y_map = (183 - y_img)*0.05
 
                 # In (lat, lng).
-                lat = x_map
-                lng = -y_map
+                lat = y_map
+                lng = x_map
 
                 lats.append(lat)
                 lngs.append(lng)

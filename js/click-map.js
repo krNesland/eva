@@ -21,8 +21,8 @@ function publishGoal(latlng) {
                 pose: {
                     position: {
                         // Have to do some trickery with the axis.
-                        x: latlng.lat,
-                        y: -latlng.lng,
+                        x: latlng.lng,
+                        y: latlng.lat,
                         z: 0.0
                     },
                     orientation: {

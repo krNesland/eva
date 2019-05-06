@@ -32,30 +32,30 @@ def map_callback(data):
 
 
 # Converting from map coordinates to coordinates of map_data.
-def map_to_img(x_map, y_map):
-    x_image = int(round(20*x_map + 199))
-    y_image = int(round(-20*y_map + 183))
+def map_to_img(x, y):
+    u = int(round(20*x + 200)) - 1
+    v = int(round(-20*y + 184)) - 1
 
-    return (x_image, y_image)
+    return (u, v)
 
 
-def free_space(x_map, y_map, region_size):
+def free_space(x, y, region_size):
     global map_data
-    x, y = map_to_img(x_map, y_map)
+    u, v = map_to_img(x, y)
 
-    left = x - region_size
+    left = u - region_size
     if left < 0:
         return False
 
-    right = x + region_size
+    right = u + region_size
     if right > map_data.shape[1]:
         return False
 
-    top = y - region_size
+    top = v - region_size
     if top < 0:
         return False
 
-    bottom = y + region_size
+    bottom = v + region_size
     if bottom > map_data.shape[0]:
         return False
 

@@ -8,8 +8,8 @@ function callDriveAround(obstaclePos, radius) {
 
     console.log("Trying to call DriveAround.");
     var request = new ROSLIB.ServiceRequest({
-        obstaclePosX: obstaclePos.lat,
-        obstaclePosY: -obstaclePos.lng,
+        obstaclePosX: obstaclePos.lng,
+        obstaclePosY: obstaclePos.lat,
         circlingRadius: radius
     });
     

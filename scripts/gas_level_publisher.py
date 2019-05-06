@@ -52,7 +52,7 @@ def talker():
 
     fixed_sensor_state_pub = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=10)
     fixed_sensor_state_msg = LinkState()
-    fixed_sensor_state_msg.link_name = 'fixed_sensor'
+    fixed_sensor_state_msg.link_name = 'gas_sensor'
     fixed_sensor_state_msg.pose.position.x = fixed_sensor_x
     fixed_sensor_state_msg.pose.position.y = fixed_sensor_y
     fixed_sensor_state_msg.pose.position.z = 0.3

@@ -171,23 +171,23 @@ class Obstacle:
     def draw(self, canvas):
         cv.circle(canvas, self.center, 10, 255, 1)
 
-    def get_lat(self, resolution):
-        x_sum = 0
-
-        for point in self.points:
-            x_sum = x_sum + point[0] 
-
-        # Average position.
-        return (x_sum/len(self.points) - 199)*resolution
-
     def get_lng(self, resolution):
-        y_sum = 0
+        u_sum = 0
 
         for point in self.points:
-            y_sum = y_sum + point[1] 
+            u_sum = u_sum + point[0] 
 
         # Average position.
-        return (y_sum/len(self.points) - 183)*resolution
+        return (u_sum/len(self.points) - 199)*resolution
+
+    def get_lat(self, resolution):
+        v_sum = 0
+
+        for point in self.points:
+            v_sum = v_sum + point[1] 
+
+        # Average position.
+        return ((-v_sum)/len(self.points) + 183)*resolution
 
 def find_obstacles():
     global obstacle_map

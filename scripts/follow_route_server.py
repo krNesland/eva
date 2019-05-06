@@ -42,14 +42,14 @@ def handle_follow_route(req):
 
     # Building up the list of commands.
     for i in range(curr_waypoint, len(req.latVec)):
-        x = req.latVec[i]
-        y = -req.lngVec[i]
+        x = req.lngVec[i]
+        y = req.latVec[i]
         angle = 0.0
 
         # If the waypoint is not the last one, we want the angle to head towards the next waypoint.
         if i < (len(req.latVec) - 1):
-            dx = req.latVec[i + 1] - x
-            dy = -req.lngVec[i + 1] - y
+            dx = req.lngVec[i + 1] - x
+            dy = req.latVec[i + 1] - y
             angle = math.atan2(dy, dx)
 
         waypoints.append((x, y, angle))

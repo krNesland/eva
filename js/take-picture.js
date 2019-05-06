@@ -8,8 +8,8 @@ function callTakePicture(obstaclePos) {
 
     console.log("Trying to call TakePicture.");
     var request = new ROSLIB.ServiceRequest({
-        obstaclePosX: obstaclePos.lat,
-        obstaclePosY: -obstaclePos.lng
+        obstaclePosX: obstaclePos.lng,
+        obstaclePosY: obstaclePos.lat
     });
     
     takePictureClient.callService(request, function(result) {

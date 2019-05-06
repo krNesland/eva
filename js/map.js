@@ -7,17 +7,17 @@ var map = L.map('map', {
 
 var meterPerPixel = 0.00668;
 
-// Setting corner1 and corner2 empirically.
-var corner1 = L.latLng(6.0, 0.0);
-var corner2 = L.latLng(0.0, 5.0);
+// Setting corner1 and corner2 empirically. LatLng of top left and bottom right of image.
+var corner1 = L.latLng(2.85, -1.5);
+var corner2 = L.latLng(-2.7, 6.0);
 var bounds = L.latLngBounds(corner1, corner2);
 
-var image = L.imageOverlay('../img/map.png', bounds).addTo(map);
+var image = L.imageOverlay('../img/leaflet_map.png', bounds).addTo(map);
 
 map.fitBounds(bounds);
 
 var obstacleLayer = L.layerGroup().addTo(map);
 
 // For calibration.
-// var marker1 = L.marker([5.0, 1.5]).addTo(map);
-// var marker2 = L.marker([1.0, 3.5]).addTo(map);
+//var marker1 = L.marker([0.0, -0.6]).addTo(map);
+//var marker2 = L.marker([1.0, 3.5]).addTo(map);
