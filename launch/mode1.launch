@@ -2,5 +2,6 @@
 
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
     <node pkg="web_video_server" name="web_video_server" type="web_video_server"/>
+    <node pkg="image_transport" name="republish" type="republish" args="compressed in:=raspicam_node/image raw out:=turtlebot3_camera"/>
 
 </launch>
