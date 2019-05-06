@@ -20,7 +20,7 @@ def talker():
     robot_pose_msg.reference_frame = 'map'
 
     listener = tf.TransformListener()
-    rate = rospy.Rate(10) # 2hz
+    rate = rospy.Rate(5)
 
     while not rospy.is_shutdown():
         
