@@ -21,8 +21,9 @@ var latLngArray = Array(100).fill().map(() => Array(100).fill(0));
 gasListener.subscribe(function(message) {
     gasValue = parseFloat(message.data);
 
-    var newLat10 = Math.floor(robotMarker.getLatLng().lat*10);
-    var newLng10 = Math.floor(robotMarker.getLatLng().lng*10);
+    // Bottom left of array is defined to be at lat=-4 and lng=-3. The array has a resolution of 10 per lat/lng unit.
+    var newLat10 = Math.floor(robotMarker.getLatLng().lat*10) + 40;
+    var newLng10 = Math.floor(robotMarker.getLatLng().lng*10) + 30;
 
     if (newLat10 < 0) {
         console.log("Latitude out of bounds.")
@@ -32,9 +33,10 @@ gasListener.subscribe(function(message) {
     }
     // A gas reading of 100 will generate 10 points. 30 will generate 3 and so on.
     else {
+        // If not visited before.
         if (latLngArray[newLat10][newLng10] < 1) {
             for (var i = 0; i < Math.floor(gasValue/10); i++) {
-                heat.addLatLng([newLat10/10.0 + i/200.0, newLng10/10.0]);
+                heat.addLatLng([(newLat10 - 40)/10.0 + i/200.0, (newLng10 - 30)/10.0]);
             }
 
             // Noting that this cell has now been visited.
