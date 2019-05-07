@@ -13,7 +13,7 @@
 }
 
 .header-img {
-    background-image: url("../img/johan_sverdrup_blur.jpg");
+    background-image: url("../img/sea_top.png");
     background-size: 1920px 600px;
     height: 600px;
     width: 100%;
@@ -24,7 +24,7 @@
 }
 
 .footer-img {
-    background-image: url("../img/johan_sverdrup_blur_bottom.jpg");
+    background-image: url("../img/sea_bottom.png");
     background-size: 1920px 200px;
     height: 100px;
     width: 100%;
