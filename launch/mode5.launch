@@ -1,12 +1,6 @@
 <launch>
 
-    <param name="/eva/gasX" value="3.4" />
-    <param name="/eva/gasY" value="-1.0" />
-
-    <param name="/eva/fixedSensorX" value="4.0" />
-    <param name="/eva/fixedSensorY" value="-2.5" />
-
-    <include file="$(find eva_a)/launch/turtlebot3_eva_b.launch"/>
+    <include file="$(find eva_a)/launch/vg12.launch"/>
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
     <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
 	  <arg name="map_file" value="$(find eva_a)/map/map.yaml" />
@@ -14,10 +8,12 @@
 
     <node pkg="tf2_web_republisher" name="tf2_web_republisher" type="tf2_web_republisher"/>
     <node pkg="eva_a" name="route_server" type="follow_route_server.py"/>
+    <node pkg="eva_a" name="robot_pose" type="robot_pose_publisher.py"/>
     
     <node pkg="web_video_server" name="web_video_server" type="web_video_server"/>
+    <node pkg="image_transport" name="republish" type="republish" args="compressed in:=raspicam_node/image raw out:=turtlebot3_camera"/>
 
-    <param name="/amcl/initial_pose_x" value="1.0" />
-    <param name="/amcl/initial_pose_y" value="-3.0" />
+    <param name="/amcl/initial_pose_x" value="0.0" />
+    <param name="/amcl/initial_pose_y" value="0.0" />
     
 </launch>

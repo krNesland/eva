@@ -2,7 +2,7 @@
 
     <include file="$(find eva_a)/launch/set_gas_parameters.launch"/>
     
-    <include file="$(find eva_a)/launch/turtlebot3_eva_b.launch"/>
+    <include file="$(find eva_a)/launch/vg12.launch"/>
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
     <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
 	  <arg name="map_file" value="$(find eva_a)/map/map.yaml" />
@@ -11,8 +11,9 @@
     <node pkg="tf2_web_republisher" name="tf2_web_republisher" type="tf2_web_republisher"/>
     <node pkg="eva_a" name="gas_level" type="gas_level_publisher.py"/>
     <node pkg="eva_a" name="gas_sensor_monitoring" type="gas_sensor_monitoring.py"/>
+    <node pkg="eva_a" name="robot_pose" type="robot_pose_publisher.py"/>
 
-    <param name="/amcl/initial_pose_x" value="1.0" />
-    <param name="/amcl/initial_pose_y" value="-3.0" />
+    <param name="/amcl/initial_pose_x" value="0.0" />
+    <param name="/amcl/initial_pose_y" value="0.0" />
     
 </launch>

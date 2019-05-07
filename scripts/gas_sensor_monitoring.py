@@ -8,8 +8,8 @@ start_move = False
 
 def send_navigation_command(pub):
     try:
-        goal_x = rospy.get_param('/eva/fixedSensorX') - 0.5
-        goal_y = rospy.get_param('/eva/fixedSensorY') + 0.5
+        goal_x = rospy.get_param('/eva/fixedSensorX') + 0.5
+        goal_y = rospy.get_param('/eva/fixedSensorY') + 0
     except:
         print("Fixed gas sensor position is unknown.")
         return
