@@ -63,6 +63,8 @@ def find_obstacles():
 
     obstacles = []
 
+    contour_img = np.zeros((384, 384), dtype=np.uint8)
+
     # Filtering out some of the contours that are unlikely to be obstacles.
     for cnt in contours:
         # Not interested in lines.
@@ -71,6 +73,13 @@ def find_obstacles():
 
         obst = Obstacle(cnt)
         obstacles.append(obst)
+
+    cv.drawContours(contour_img, contours, -1, 255, 1)
+
+    cv.imshow("Obstacles closed", closed)
+    cv.imshow("Obstacles opened", opened)
+    cv.imshow("Contours", contour_img)
+    cv.waitKey(30)
 
     return obstacles
 

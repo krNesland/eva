@@ -9,12 +9,13 @@ import math
 import numpy as np
 
 from std_msgs.msg import String
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import CompressedImage, Image
 from cv_bridge import CvBridge, CvBridgeError
 
-EXPERIMENT = False # Experiment if real life Turtlebot is running.
+EXPERIMENT = True # Experiment if real life Turtlebot is running.
 
 bridge = CvBridge()
+pub = rospy.Publisher("eva/gas_image", Image, queue_size=1)
 
 def callback(data):
     try:
@@ -26,8 +27,8 @@ def callback(data):
 
     hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
 
-    lower_blue = np.array([110,50,50])
-    upper_blue = np.array([130,255,255])
+    lower_blue = np.array([115,50,50])
+    upper_blue = np.array([125,255,255])
 
     mask = cv.inRange(hsv, lower_blue, upper_blue)
 
@@ -42,7 +43,7 @@ def callback(data):
     x_moment = np.sum(x_moments)
     y_moment = np.sum(y_moments)
 
-    if not (total == 0):
+    if not (total < 25):
         x_arm = x_moment/total
         y_arm = y_moment/total
 
@@ -51,11 +52,17 @@ def callback(data):
 
         cv.drawMarker(cv_image, (x_arm, y_arm), (0, 0, 255))
     else:
-        print("No colour in the correct range was found.")
+        print("Not enough pixels in the correct range was found.")
+
+    try:
+        gas_image = bridge.cv2_to_imgmsg(cv_image, "bgr8")
+        pub.publish(gas_image)
+    except CvBridgeError as e:
+        print(e)  
 
     cv.imshow("Image window", cv_image)
     cv.imshow("Mask window", mask)
-    cv.waitKey(3)
+    cv.waitKey(30)
     
 def listener():
     rospy.init_node('thermal_center', anonymous=True)

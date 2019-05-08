@@ -1,9 +1,11 @@
 <launch>
 
-    <param name="/eva/gasX" value="0.0" />
+    <!--param name="/eva/gasX" value="0.0" /-->
+    <param name="/eva/gasX" value="-10.0" />
     <param name="/eva/gasY" value="2.0" />
 
-    <param name="/eva/fixedSensorX" value="-1.4" />
+    <!--param name="/eva/fixedSensorX" value="-1.4" /-->
+    <param name="/eva/fixedSensorX" value="-10.4" />
     <param name="/eva/fixedSensorY" value="2.5" />
 
 </launch>

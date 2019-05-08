@@ -49,7 +49,7 @@ def map_callback(data):
         map_width = 384
         map_height = 384
         resolution = 0.05
-        map_dilate_radius = 5
+        map_dilate_radius = 6
 
     # Making it equal to how the .pgm file looks.
     raw_map_data = np.flipud(np.reshape(data.data, (map_height, map_width)).astype(np.int8))
@@ -200,11 +200,14 @@ def scan_callback(data):
     obstacle_map[obstacle_map > 2] = 2
 
     visualizer = (obstacle_map + 2)/4
+    visualizer3 = np.copy(visualizer)
     visualizer[map_data > 127] = 0.0 # Removing where there is map
 
     visualizer2 = np.array(255.0*visualizer, dtype=np.uint8)
 
-    cv.imshow("visualizer", visualizer)
+    cv.imshow("Dilated map", map_data)
+    cv.imshow("Raw mapping", visualizer3)
+    cv.imshow("Subtracted mapping", visualizer2)
     cv.waitKey(30)
 
     # If there was detected any possible mismatches. Sending a message with these mismatches.
