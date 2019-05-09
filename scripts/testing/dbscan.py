@@ -5,7 +5,9 @@ This is a simple implementation of DBSCAN intended to explain the algorithm.
 @author: Chris McCormick
 """
 
-import numpy
+import numpy as np
+import cv2 as cv
+import matplotlib.pyplot as plt
 
 def MyDBSCAN(D, eps, MinPts):
     """
@@ -140,7 +142,36 @@ def regionQuery(D, P, eps):
     for Pn in range(0, len(D)):
         
         # If the distance is below the threshold, add it to the neighbors list.
-        if numpy.linalg.norm(D[P] - D[Pn]) < eps:
+        if np.linalg.norm(D[P] - D[Pn]) < eps:
            neighbors.append(Pn)
             
     return neighbors
+
+mat = np.load("/home/mtp/img/threshold.npy")
+
+# Getting an array of vectors where each vector contains the pixel coordinates of the possible occupied cells.
+points = np.transpose(np.nonzero(mat))
+
+# At least six points in a cluster.
+labels = np.array(MyDBSCAN(points, 3, 6))
+# Want the first cluster to be number 0.
+labels = labels - 1
+
+xVec = []
+yVec = []
+labelVec = []
+
+# Adding points to their corresponding obstacle.
+for i, label in enumerate(labels):
+    if label >= 0:
+        xVec.append(points[i][0])
+        yVec.append(points[i][1])
+        labelVec.append(label)
+        
+
+cv.imwrite("/home/mtp/img/mat.png", mat)
+
+plt.scatter(xVec, yVec, c=labelVec, cmap="prism")
+plt.ylabel("y")
+plt.xlabel("x")
+plt.show()

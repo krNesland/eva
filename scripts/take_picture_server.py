@@ -16,7 +16,7 @@ from os import path
 from nav_msgs.msg import OccupancyGrid
 from eva_a.srv import *
 from move_base_msgs.msg import MoveBaseActionGoal
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist
 from actionlib_msgs.msg import GoalStatusArray
@@ -182,14 +182,16 @@ def handle_take_picture(req):
         navigate_to_pose(pose)
 
         # Several times in order to force the newest image.
-        data = rospy.wait_for_message("/camera/rgb/image_raw/compressed", CompressedImage)
-        data = rospy.wait_for_message("/camera/rgb/image_raw/compressed", CompressedImage)
-        data = rospy.wait_for_message("/camera/rgb/image_raw/compressed", CompressedImage)
+        print("Waiting for image.")
+        data = rospy.wait_for_message("/turtlebot3_camera", Image)
+        data = rospy.wait_for_message("/turtlebot3_camera", Image)
+        data = rospy.wait_for_message("/turtlebot3_camera", Image)
+        print("Image gotten.")
 
         bridge = CvBridge()
         rospack = rospkg.RosPack()
         rospy.sleep(0.2)
-        cv_image = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+        cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
         img_path = path.join(rospack.get_path('eva_a'), 'img', 'captures', 'capture.jpg')
         cv.imwrite(img_path, cv_image)
         print("Image stored: " + img_path)

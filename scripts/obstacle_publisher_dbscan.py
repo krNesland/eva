@@ -7,6 +7,7 @@ import rospy
 import numpy as np
 import cv2 as cv
 import math
+import os
 
 from eva_a.msg import *
 
@@ -222,6 +223,9 @@ def find_obstacles():
     for i, label in enumerate(labels):
         if label >= 0:
             obstacles[label].add_point(points[i][1], points[i][0])
+
+    np.save("/home/mtp/img/threshold.npy", thresh)
+    print("Saved np-array.")
 
     return obstacles
 

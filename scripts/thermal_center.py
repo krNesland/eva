@@ -20,6 +20,7 @@ pub = rospy.Publisher("eva/gas_image", Image, queue_size=1)
 def callback(data):
     try:
         cv_image = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+        org_image = np.copy(cv_image)
     except CvBridgeError as e:
         print(e)
     
@@ -27,8 +28,8 @@ def callback(data):
 
     hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
 
-    lower_blue = np.array([115,50,50])
-    upper_blue = np.array([125,255,255])
+    lower_blue = np.array([100,50,50])
+    upper_blue = np.array([140,255,255])
 
     mask = cv.inRange(hsv, lower_blue, upper_blue)
 
@@ -62,6 +63,7 @@ def callback(data):
 
     cv.imshow("Image window", cv_image)
     cv.imshow("Mask window", mask)
+    cv.imshow("Marker window", org_image)
     cv.waitKey(30)
     
 def listener():

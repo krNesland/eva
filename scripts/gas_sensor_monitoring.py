@@ -8,7 +8,7 @@ start_move = False
 
 def send_navigation_command(pub):
     try:
-        goal_x = rospy.get_param('/eva/fixedSensorX') + 0.5
+        goal_x = rospy.get_param('/eva/fixedSensorX') - 0.5
         goal_y = rospy.get_param('/eva/fixedSensorY') + 0
     except:
         print("Fixed gas sensor position is unknown.")
@@ -28,7 +28,7 @@ def callback(data):
     global start_move
     gas_level = float(data.data)
 
-    if gas_level > 20.0:
+    if gas_level > 17.7:
         start_move = True
 
     
