@@ -60,7 +60,7 @@ def extract_region(x_obstacle, y_obstacle, circling_radius):
 
 def find_boundary(region):
     # Close to connect.
-    se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
+    se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (7, 7))
     region_closed = cv.morphologyEx(region, cv.MORPH_CLOSE, se_close)
 
     # Find contours.

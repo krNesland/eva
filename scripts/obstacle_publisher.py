@@ -7,12 +7,17 @@ import rospy
 import numpy as np
 import cv2 as cv
 import math
+from os import path
+import rospkg
 
 from eva_a.msg import *
 
 # Could have had the (x, y)-dimensions of the accumulator in a different size than the image.
 
 obstacle_map = np.zeros((384, 384), dtype=np.uint8)
+rospack = rospkg.RosPack()
+outside_map = cv.imread(path.join(rospack.get_path('eva_a'), 'map', 'map_outside.pgm'), cv.IMREAD_GRAYSCALE)
+outside_pixels = np.nonzero(outside_map)
 
 class Obstacle:
     def __init__(self, cnt):
@@ -35,6 +40,7 @@ class Obstacle:
 
 def find_obstacles():
     global obstacle_map
+    global outside_pixels
 
     try:
         close_radius = rospy.get_param('/eva/obstacleCloseRadius')
@@ -43,19 +49,23 @@ def find_obstacles():
         
     except:
         print("Unable to load morphology parameters.")
-        close_radius = 5
-        open_radius = 2
-        min_obstacle_area = 5
+        close_radius = 2
+        open_radius = 3
+        min_obstacle_area = 6
 
     # Threshold.
     ret, thresh = cv.threshold(obstacle_map, 150, 255, cv.THRESH_BINARY)
+    # Removing all values outside the borders of the map.
+    thresh[outside_pixels] = 0
 
     # Close to make more connected.
-    se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (close_radius, close_radius))
-    closed = cv.morphologyEx(thresh, cv.MORPH_CLOSE, se_close)
+    # se_close = cv.getStructuringElement(cv.MORPH_ELLIPSE, (2*close_radius, 2*close_radius))
+    se_closed = np.array([[1, 1], [1, 1]], dtype=np.uint8)
+    closed = cv.morphologyEx(thresh, cv.MORPH_CLOSE, se_closed)
 
     # Open to remove thin structures and small grains.
-    se_open = cv.getStructuringElement(cv.MORPH_ELLIPSE, (open_radius, open_radius))
+    # se_open = cv.getStructuringElement(cv.MORPH_ELLIPSE, (2*open_radius, 2*open_radius))
+    se_open = np.array([[1, 1], [1, 1]], dtype=np.uint8)
     opened = cv.morphologyEx(closed, cv.MORPH_OPEN, se_open)
 
     # Find contours.

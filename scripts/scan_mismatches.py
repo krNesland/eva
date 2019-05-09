@@ -57,7 +57,7 @@ def map_callback(data):
     raw_map_data = raw_map_data.astype(np.uint8)
 
     ret, map_data = cv.threshold(raw_map_data, 50, 255, cv.THRESH_BINARY)
-    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (map_dilate_radius, map_dilate_radius))
+    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (2*map_dilate_radius, 2*map_dilate_radius))
     map_data = cv.morphologyEx(map_data, cv.MORPH_DILATE, kernel)
 
     # Update pose.
@@ -100,9 +100,9 @@ def scan_callback(data):
     except:
         print("Unable to load occupancy parameters.")
          # Probability of occupied if hit.
-        prob_hit = 0.65
+        prob_hit = 0.75
         # Probability of occupied if not hit.
-        prob_nhit = 0.40
+        prob_nhit = 0.45
 
     max_range=data.range_max
     min_range=data.range_min
