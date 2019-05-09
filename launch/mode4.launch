@@ -11,7 +11,7 @@
     <node pkg="eva_a" name="route_server" type="follow_route_server.py"/>
     <node pkg="eva_a" name="scan_mismatches" type="scan_mismatches.py"/>
     <node pkg="eva_a" name="obstacle_publisher" type="obstacle_publisher.py"/>
-
+    <node pkg="eva_a" name="take_picture_server" type="take_picture_server.py"/>
     <node pkg="eva_a" name="drive_around_server" type="drive_around_server.py"/>
     <node pkg="eva_a" name="robot_pose" type="robot_pose_publisher.py"/>
 
