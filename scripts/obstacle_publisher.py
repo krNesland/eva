@@ -86,6 +86,7 @@ def find_obstacles():
 
     cv.drawContours(contour_img, contours, -1, 255, 1)
 
+    cv.imshow("Removed outside", thresh)
     cv.imshow("Obstacles closed", closed)
     cv.imshow("Obstacles opened", opened)
     cv.imshow("Contours", contour_img)
