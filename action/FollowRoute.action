@@ -1,0 +1,10 @@
+# Define the goal
+float64[] latVec
+float64[] lngVec
+uint32 firstWaypoint
+---
+# Define the result
+uint32 success
+---
+# Define a feedback message
+uint32 headingFor

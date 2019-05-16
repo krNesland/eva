@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 
 # Follows the requested route
 
@@ -7,120 +7,102 @@
 
 import rospy
 import roslib
+roslib.load_manifest('eva_a')
+import actionlib
 import math
 
-from eva_a.srv import *
-from move_base_msgs.msg import MoveBaseActionGoal
-from actionlib_msgs.msg import GoalStatusArray, GoalID
-from std_msgs.msg import UInt32
+from eva_a.msg import *
+from move_base_msgs.msg import *
 
-# Could maybe benefit from being implemented as an action and not a server. Actions can report back during execution, not only at the end.
-# Does not currently return an error if the route is cancelled.
+# Missing the cancel part. Have to do something like set_preempted...
 
-call_nr = -1
+class FollowRouteAction(object):
+    # create messages that are used to publish feedback/result
+    _feedback = eva_a.msg.FollowRouteFeedback()
+    _result = eva_a.msg.FollowRouteResult()
 
-def handle_follow_route(req):
-    global call_nr
-    call_nr = call_nr + 1
+    def __init__(self, name):
+        print(name)
+        self._action_name = name
+        self._as = actionlib.SimpleActionServer(self._action_name, eva_a.msg.FollowRouteAction, execute_cb=self.execute_cb, auto_start = False)
+        self._as.start()
+        print("Server is ready.")
+      
+    def execute_cb(self, goal):
+        print("Starting execution.")
+        self._feedback.headingFor = goal.firstWaypoint
+        
+        # publish info to the console for the user
+        rospy.loginfo('%s: Executing, following route from waypoint %i.' % (self._action_name, goal.firstWaypoint))
 
-    reached_goal = False
-    curr_waypoint = req.startFrom
+        if len(goal.latVec) < 1:
+            rospy.loginfo("A route must have at least one waypoint.")
+            self._as.set_aborted(0, "Not enough waypoints.")
+            return
+        
+        if not len(goal.latVec) == len(goal.lngVec):
+            rospy.loginfo("xVec and yVec must have equal length.")
+            self._as.set_aborted(0, "Not the same number of x and y coordiantes.")
+            return
 
-    print("FollowRoute received a new route.")
-    print(req)
+        mb_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        mb_client.wait_for_server()
 
-    if len(req.latVec) < 1:
-        print("A route must have at least one waypoint.")
-        return FollowRouteResponse(0)
-    
-    if not len(req.latVec) == len(req.lngVec):
-        print("xVec and yVec must have equal length.")
-        return FollowRouteResponse(0)
+        # Building up the list of commands.
+        for i in range(self._feedback.headingFor, len(goal.latVec)):
+            x = goal.lngVec[i]
+            y = goal.latVec[i]
+            angle = 0.0
 
-    finished = False
-    waypoints = []
+            # If the waypoint is not the last one, we want the angle to head towards the next waypoint.
+            if i < (len(goal.latVec) - 1):
+                dx = goal.lngVec[i + 1] - x
+                dy = goal.latVec[i + 1] - y
+                angle = math.atan2(dy, dx)
 
-    # Building up the list of commands.
-    for i in range(curr_waypoint, len(req.latVec)):
-        x = req.lngVec[i]
-        y = req.latVec[i]
-        angle = 0.0
+            mb_goal = MoveBaseGoal()
+            mb_goal.target_pose.header.frame_id = "map"
+            mb_goal.target_pose.header.stamp = rospy.get_rostime()
+            mb_goal.target_pose.pose.position.x = x
+            mb_goal.target_pose.pose.position.y = y
+            mb_goal.target_pose.pose.orientation.z = math.sin(angle/2)
+            mb_goal.target_pose.pose.orientation.w = math.cos(angle/2)
 
-        # If the waypoint is not the last one, we want the angle to head towards the next waypoint.
-        if i < (len(req.latVec) - 1):
-            dx = req.lngVec[i + 1] - x
-            dy = req.latVec[i + 1] - y
-            angle = math.atan2(dy, dx)
+            # Sends the goal to the action server.
+            mb_client.send_goal(mb_goal)
 
-        waypoints.append((x, y, angle))
+            self._as.publish_feedback(self._feedback)
 
-    pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=1)
-    waypoint_pub = rospy.Publisher('/eva/curr_waypoint', UInt32, queue_size=1)
+            # Waits for the server to finish performing the action. Can use max 60 sec to reach the waypoint.
+            mb_client.wait_for_result(rospy.Duration.from_sec(60.0))
 
-    now_goal = waypoints.pop(0)
-    now_msg = MoveBaseActionGoal()
-    now_msg.goal.target_pose.header.frame_id = "map"
-    now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint) + "_" + str(call_nr)
-    now_msg.goal.target_pose.pose.position.x = now_goal[0]
-    now_msg.goal.target_pose.pose.position.y = now_goal[1]
-    now_msg.goal.target_pose.pose.orientation.z = math.sin(now_goal[2]/2)
-    now_msg.goal.target_pose.pose.orientation.w = math.cos(now_goal[2]/2)
+            self._feedback.headingFor = self._feedback.headingFor + 1
 
-    rospy.sleep(0.5)
-    pub.publish(now_msg)
-    pub.publish(now_msg)
+            # Prints out the result of executing the action (mb does not send back a result)
+            # return mb_client.get_result()
 
-    while (not rospy.is_shutdown()) and (not finished):
-
-        data = rospy.wait_for_message("move_base/status", GoalStatusArray)
-        waypoint_pub.publish(curr_waypoint)
-
-        for s in data.status_list:
-            if "follow_route_goal_" + str(curr_waypoint) in s.goal_id.id:
-                if s.status == 6:
-                    print("Follow route was cancelled.")
-                    return FollowRouteResponse(curr_waypoint)
-
-                if s.status == 3:
-                    reached_goal = True
-                else:
-                    reached_goal = False
-
-        if reached_goal:
-            if not len(waypoints) < 1:
-                curr_waypoint = curr_waypoint + 1
-
-                now_goal = waypoints.pop(0)
-                now_msg = MoveBaseActionGoal()
-                now_msg.goal.target_pose.header.frame_id = "map"
-                now_msg.goal_id.id = "follow_route_goal_" + str(curr_waypoint) + "_" + str(call_nr)
-                now_msg.goal.target_pose.pose.position.x = now_goal[0]
-                now_msg.goal.target_pose.pose.position.y = now_goal[1]
-                # Orientation as quaternion.
-                now_msg.goal.target_pose.pose.orientation.z = math.sin(now_goal[2]/2)
-                now_msg.goal.target_pose.pose.orientation.w = math.cos(now_goal[2]/2)
-                rospy.sleep(0.5)
-                pub.publish(now_msg)
-                pub.publish(now_msg)
-                ready_for_next = False
-                print("FollowRoute is heading for next waypoint.")
-                print(curr_waypoint)
-
-                # Giving it some time to publish the new goal before checking the status.
-                rospy.sleep(2.0)
-            else:
-                finished = True
-                print("FollowRoute finished.")
-
-    rospy.sleep(1.0)
-    return FollowRouteResponse(100) # 100 if success.
-
-def follow_route_server():
-
+        self._result.success = 1
+        rospy.loginfo('%s: Succeeded' % self._action_name)
+        self._as.set_succeeded(self._result)
+        
+        '''
+        # start executing the action
+        for i in range(1, goal.order):
+            # check that preempt has not been requested by the client
+            if self._as.is_preempt_requested():
+                rospy.loginfo('%s: Preempted' % self._action_name)
+                self._as.set_preempted()
+                success = False
+                break
+            self._feedback.sequence.append(self._feedback.sequence[i] + self._feedback.sequence[i-1])
+            # publish the feedback
+            self._as.publish_feedback(self._feedback)
+            # this step is not necessary, the sequence is computed at 1 Hz for demonstration purposes
+            r.sleep()
+        '''
+          
+        
+if __name__ == '__main__':
     rospy.init_node('follow_route_server')
-    print("FollowRoute service waiting for call...")
-    s = rospy.Service('/eva/follow_route', FollowRoute, handle_follow_route)
+    server = FollowRouteAction(rospy.get_name())
     rospy.spin()
-
-if __name__ == "__main__":
-    follow_route_server()
