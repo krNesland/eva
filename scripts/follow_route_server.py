@@ -29,6 +29,8 @@ class FollowRouteAction(object):
         print("Server is ready.")
       
     def execute_cb(self, goal):
+        success = 1
+
         print("Starting execution.")
         self._feedback.headingFor = goal.firstWaypoint
         
@@ -48,8 +50,8 @@ class FollowRouteAction(object):
         mb_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         mb_client.wait_for_server()
 
-        # Building up the list of commands.
         for i in range(self._feedback.headingFor, len(goal.latVec)):
+
             x = goal.lngVec[i]
             y = goal.latVec[i]
             angle = 0.0
@@ -78,29 +80,17 @@ class FollowRouteAction(object):
 
             self._feedback.headingFor = self._feedback.headingFor + 1
 
-            # Prints out the result of executing the action (mb does not send back a result)
-            # return mb_client.get_result()
-
-        self._result.success = 1
-        rospy.loginfo('%s: Succeeded' % self._action_name)
-        self._as.set_succeeded(self._result)
-        
-        '''
-        # start executing the action
-        for i in range(1, goal.order):
-            # check that preempt has not been requested by the client
             if self._as.is_preempt_requested():
                 rospy.loginfo('%s: Preempted' % self._action_name)
                 self._as.set_preempted()
-                success = False
+                success = 0
                 break
-            self._feedback.sequence.append(self._feedback.sequence[i] + self._feedback.sequence[i-1])
-            # publish the feedback
-            self._as.publish_feedback(self._feedback)
-            # this step is not necessary, the sequence is computed at 1 Hz for demonstration purposes
-            r.sleep()
-        '''
-          
+
+            # Prints out the result of executing the action (mb does not send back a result)
+            # return mb_client.get_result()
+
+        self._result.success = success
+        self._as.set_succeeded(self._result)
         
 if __name__ == '__main__':
     rospy.init_node('follow_route_server')
