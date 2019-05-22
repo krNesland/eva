@@ -6,6 +6,8 @@
 
 import roslib
 import rospy
+roslib.load_manifest('eva_a')
+import actionlib
 import numpy as np
 import cv2 as cv
 import math
@@ -13,13 +15,10 @@ import tf
 
 from eva_a.msg import *
 from eva_a.srv import *
-from move_base_msgs.msg import MoveBaseActionGoal
 from geometry_msgs.msg import Twist
-from actionlib_msgs.msg import GoalStatusArray
-
+from move_base_msgs.msg import *
 
 obstacle_map = np.zeros((384, 384), dtype=np.uint8)
-seq_id = 0
 
 def map_callback(data):
     global obstacle_map
@@ -27,7 +26,6 @@ def map_callback(data):
     obstacle_data = np.array(data.data, dtype=np.uint8)
     obstacle_map = np.reshape(obstacle_data, (data.height, data.width))
     ret, obstacle_map = cv.threshold(obstacle_map, 150, 255, cv.THRESH_BINARY)
-
 
 # Converting from map coordinates to coordinates of obstacle_map.
 def map_to_img(x_map, y_map):
@@ -48,12 +46,6 @@ def extract_region(x_obstacle, y_obstacle, circling_radius):
     region = obstacle_map[(bottom - height):bottom, left:(left + width)]
     print((left, bottom))
     print(region.shape)
-
-    #cv.rectangle(obstacle_map,(left,bottom - height),(left + width,bottom),255,2)
-
-    #cv.imshow('obstacle', obstacle_map)
-    #cv.imshow('region', region)
-    #cv.waitKey(30)
 
     return region
 
@@ -183,36 +175,20 @@ def find_starting_pose(x_obstacle, y_obstacle, circling_radius):
 
 
 def navigate_to_pose(pose):
-    global seq_id
 
-    pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=10)
-    msg = MoveBaseActionGoal()
-    msg.goal.target_pose.header.frame_id = "map"
-    msg.goal_id.id = "drive_around_goal_" + str(seq_id)
-    msg.goal.target_pose.pose.position.x = pose[0]
-    msg.goal.target_pose.pose.position.y = pose[1]
-    # Orientation as a quaternion.
-    msg.goal.target_pose.pose.orientation.z = math.sin(pose[2]/2)
-    msg.goal.target_pose.pose.orientation.w = math.cos(pose[2]/2)
+    mb_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+    mb_client.wait_for_server()
 
-    rospy.sleep(0.5)
-    pub.publish(msg)
+    mb_goal = MoveBaseGoal()
+    mb_goal.target_pose.header.frame_id = "map"
+    mb_goal.target_pose.header.stamp = rospy.get_rostime()
+    mb_goal.target_pose.pose.position.x = pose[0]
+    mb_goal.target_pose.pose.position.y = pose[1]
+    mb_goal.target_pose.pose.orientation.z = math.sin(pose[2]/2)
+    mb_goal.target_pose.pose.orientation.w = math.cos(pose[2]/2)
 
-    reached_goal = False
-    rate = rospy.Rate(2.0)
-
-    while (not rospy.is_shutdown()) and (not reached_goal):
-
-        data = rospy.wait_for_message("move_base/status", GoalStatusArray)
-
-        for s in data.status_list:
-            if "drive_around_goal_" + str(seq_id) in s.goal_id.id:
-                if s.status == 3:
-                    reached_goal = True
-
-        rate.sleep()
-
-    seq_id = seq_id + 1
+    mb_client.send_goal(mb_goal)
+    mb_client.wait_for_result(rospy.Duration.from_sec(60.0))
 
 def handle_drive_around(req):
     global obstacle_map

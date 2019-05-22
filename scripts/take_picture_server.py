@@ -134,7 +134,6 @@ def navigate_to_pose(pose):
     mb_client.send_goal(mb_goal)
     mb_client.wait_for_result(rospy.Duration.from_sec(60.0))
 
-
 def handle_take_picture(req):
     global map_data
 
