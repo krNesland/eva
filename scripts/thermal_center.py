@@ -9,17 +9,15 @@ import math
 import numpy as np
 
 from std_msgs.msg import String
-from sensor_msgs.msg import CompressedImage, Image
+from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-
-EXPERIMENT = True # Experiment if real life Turtlebot is running.
 
 bridge = CvBridge()
 pub = rospy.Publisher("eva/gas_image", Image, queue_size=1)
 
 def callback(data):
     try:
-        cv_image = bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+        cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
         org_image = np.copy(cv_image)
     except CvBridgeError as e:
         print(e)
@@ -69,10 +67,7 @@ def callback(data):
 def listener():
     rospy.init_node('thermal_center', anonymous=True)
 
-    if EXPERIMENT:
-        rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, callback, queue_size=1)
-    else:
-        rospy.Subscriber("/camera/rgb/image_raw/compressed", CompressedImage, callback, queue_size=1) # Simulation.    
+    rospy.Subscriber("/turtlebot3_camera", Image, callback, queue_size=1)   
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()

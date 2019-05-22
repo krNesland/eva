@@ -12,7 +12,6 @@ import math
 import random
 
 from std_msgs.msg import String
-from gazebo_msgs.msg import LinkState
 
 # Note that we are now using the estimated position and not the actual position in Gazebo.
 # Also sets the position of the gas cloud in Gazebo.
@@ -32,42 +31,22 @@ def talker():
     except:
         print("Not able to load gasCenter and sensorCenter.")
         
-        gas_cloud_x = 3.0
-        gas_cloud_y = -3.0
+        gas_cloud_x = 1.0
+        gas_cloud_y = -1.5
 
-        fixed_sensor_x = 4.0
-        fixed_sensor_y = -4.0
-        
-    gas_cloud_center = (gas_cloud_x, gas_cloud_y)
-    fixed_sensor_center = (fixed_sensor_x, fixed_sensor_y)
-
-    gas_cloud_state_pub = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=10)
-    gas_cloud_state_msg = LinkState()
-    gas_cloud_state_msg.link_name = 'gas_cloud'
-    gas_cloud_state_msg.pose.position.x = gas_cloud_x
-    gas_cloud_state_msg.pose.position.y = gas_cloud_y
-    gas_cloud_state_msg.pose.position.z = 0.3
-    gas_cloud_state_msg.pose.orientation.w = 1.0
-    gas_cloud_state_msg.reference_frame = 'map'
-
-    fixed_sensor_state_pub = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=10)
-    fixed_sensor_state_msg = LinkState()
-    fixed_sensor_state_msg.link_name = 'gas_sensor'
-    fixed_sensor_state_msg.pose.position.x = fixed_sensor_x
-    fixed_sensor_state_msg.pose.position.y = fixed_sensor_y
-    fixed_sensor_state_msg.pose.position.z = 0.3
-    fixed_sensor_state_msg.pose.orientation.w = 1.0
-    fixed_sensor_state_msg.reference_frame = 'map'
-
+        fixed_sensor_x = 0.15
+        fixed_sensor_y = 0.84
+    
     robot_sensor_pub = rospy.Publisher('/eva/gas_level', String, queue_size=10)
     fixed_sensor_pub = rospy.Publisher('/eva/fixed_gas_level', String, queue_size=10)
+    
+    gas_cloud_center = (gas_cloud_x, gas_cloud_y)
+    fixed_sensor_center = (fixed_sensor_x, fixed_sensor_y)
 
     listener = tf.TransformListener()
     rate = rospy.Rate(2) # 2hz
 
     while not rospy.is_shutdown():
-        gas_cloud_state_pub.publish(gas_cloud_state_msg)
-        fixed_sensor_state_pub.publish(fixed_sensor_state_msg)
         
         try:
             (trans,rot) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))

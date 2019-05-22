@@ -1,4 +1,4 @@
-<sdf version='1.5'>
+<sdf version='1.4'>
   <model name='vg12'>
     <static>1</static>
 
@@ -39,45 +39,9 @@
       </visual>
     </link>
 
-    <link name='taurob'>
-      <collision name='body'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>/home/mtp/catkin_ws/src/eva_a/models/vg12/meshes/taurob.dae</uri>
-            <scale>1.0 1.0 1.0</scale>
-          </mesh>
-        </geometry>
-        <max_contacts>10</max_contacts>
-        <surface>
-          <bounce/>
-          <friction>
-            <ode/>
-          </friction>
-          <contact>
-            <ode/>
-          </contact>
-        </surface>
-      </collision>
-      <visual name='body'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>/home/mtp/catkin_ws/src/eva_a/models/vg12/meshes/taurob.dae</uri>
-            <scale>1.0 1.0 1.0</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Red</name>
-          </script>
-        </material>
-      </visual>
-    </link>
-
     <link name='gas_cloud'>
       <visual name='visual'>
+      <pose>-1.5 1.0 0.3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.1</radius>
@@ -102,6 +66,7 @@
 
     <link name='gas_sensor'>
       <visual name='visual'>
+      <pose>0.15 0.84 0.3 0 0 0</pose>
         <geometry>
           <box>
             <size>0.1 0.1 0.1</size>

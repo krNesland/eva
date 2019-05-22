@@ -1,0 +1,9 @@
+<launch>
+	
+    <include file="$(find eva_a)/launch/vg12_sim.launch"/>
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+
+    <node pkg="web_video_server" name="web_video_server" type="web_video_server"/>
+    <node pkg="image_transport" name="republish" type="republish" args="compressed in:=camera/rgb/image_raw raw out:=turtlebot3_camera"/>
+
+</launch>

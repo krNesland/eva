@@ -78,6 +78,7 @@
 
     <link name='gas_cloud'>
       <visual name='visual'>
+      <pose>-1.5 1.0 0.3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.1</radius>
@@ -102,6 +103,7 @@
 
     <link name='gas_sensor'>
       <visual name='visual'>
+        <pose>0.15 0.84 0.3 0 0 0</pose>
         <geometry>
           <box>
             <size>0.1 0.1 0.1</size>
