@@ -6,6 +6,8 @@
 
 import roslib
 import rospy
+roslib.load_manifest('eva_a')
+import actionlib
 import numpy as np
 import cv2 as cv
 import math
@@ -15,15 +17,13 @@ from os import path
 
 from nav_msgs.msg import OccupancyGrid
 from eva_a.srv import *
-from move_base_msgs.msg import MoveBaseActionGoal
+from move_base_msgs.msg import *
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist
-from actionlib_msgs.msg import GoalStatusArray
 
 
 map_data = np.zeros((384, 384), dtype=np.int8)
-seq_id = 0
 
 def map_callback(data):
     global map_data
@@ -84,24 +84,6 @@ def find_capturing_pose(x_obstacle, y_obstacle):
         if free_space(x, y, 6):
             possible_poses.append((x, y, theta))
 
-
-    '''
-
-    visualizer = np.zeros((384, 384), dtype=np.uint8)
-    visualizer[map_data > 50] = 50
-
-    obstacleX, obstacleY = map_to_img(x_obstacle, y_obstacle)
-    visualizer[obstacleY][obstacleX] = 250
-
-    for tup in possible_poses:
-        vizX, vizY = map_to_img(tup[0], tup[1])
-        visualizer[vizY][vizX] = 150
-
-    cv.imshow("vizz", visualizer)
-    cv.waitKey()
-
-    '''
-
     # Find current pose.
     tf_listener=tf.TransformListener()
     robot_pos = [0.0, 0.0]
@@ -137,37 +119,21 @@ def find_capturing_pose(x_obstacle, y_obstacle):
 
 
 def navigate_to_pose(pose):
-    global seq_id
 
-    pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal, queue_size=10)
-    msg = MoveBaseActionGoal()
-    msg.goal.target_pose.header.frame_id = "map"
-    msg.goal_id.id = "take_picture_goal_" + str(seq_id)
-    msg.goal.target_pose.pose.position.x = pose[0]
-    msg.goal.target_pose.pose.position.y = pose[1]
-    # Orientation as a quaternion.
-    msg.goal.target_pose.pose.orientation.z = math.sin(pose[2]/2)
-    msg.goal.target_pose.pose.orientation.w = math.cos(pose[2]/2)
+    mb_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+    mb_client.wait_for_server()
 
-    rospy.sleep(0.5)
-    pub.publish(msg)
+    mb_goal = MoveBaseGoal()
+    mb_goal.target_pose.header.frame_id = "map"
+    mb_goal.target_pose.header.stamp = rospy.get_rostime()
+    mb_goal.target_pose.pose.position.x = pose[0]
+    mb_goal.target_pose.pose.position.y = pose[1]
+    mb_goal.target_pose.pose.orientation.z = math.sin(pose[2]/2)
+    mb_goal.target_pose.pose.orientation.w = math.cos(pose[2]/2)
 
-    reached_goal = False
-    rate = rospy.Rate(2.0)
+    mb_client.send_goal(mb_goal)
+    mb_client.wait_for_result(rospy.Duration.from_sec(60.0))
 
-    while (not rospy.is_shutdown()) and (not reached_goal):
-
-        data = rospy.wait_for_message("move_base/status", GoalStatusArray)
-
-        for s in data.status_list:
-            if "take_picture_goal_" + str(seq_id) in s.goal_id.id:
-                if s.status == 3:
-                    reached_goal = True
-
-        rate.sleep()
-
-
-    seq_id = seq_id + 1
 
 def handle_take_picture(req):
     global map_data
