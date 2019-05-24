@@ -1,0 +1,14 @@
+<launch>
+
+    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_narrow.launch"/>
+    
+    <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+	  <arg name="map_file" value="$(env HOME)/map.yaml" />
+    </include>
+
+    <node pkg="eva_a" name="narrow" type="narrow.py" output="screen"/>
+
+    <param name="/amcl/initial_pose_x" value="0.35" />
+    <param name="/amcl/initial_pose_y" value="-0.35" />
+    
+</launch>
