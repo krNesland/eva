@@ -2,25 +2,25 @@
 
 # Publishing a gas level based on how close it is to a pre-defined gas cloud.
 
-# Subscribe: /tf, 
-# Publish: /eva/gas_level, /gazebo/set_link_state
+# Subscribe: /tf
+# Publish: /eva/gas_level, /eva/fixed_gas_level
 
 import rospy
 import tf
 import roslib
 import math
 import random
+import numpy as np
 
-from std_msgs.msg import String
+from std_msgs.msg import Float32
 
 # Note that we are now using the estimated position and not the actual position in Gazebo.
-# Also sets the position of the gas cloud in Gazebo.
-
 # Fixed refers to the fixed gas sensor and robot refers to the sensor on the moveable robot.
 
 def talker():
     rospy.init_node('gas_level_publisher', anonymous=True)
 
+    # Finding the position of the gas leakage and the mounted gas sensor.
     try:
         gas_cloud_x = rospy.get_param("/eva/gasX")
         gas_cloud_y = rospy.get_param("/eva/gasY")
@@ -37,8 +37,8 @@ def talker():
         fixed_sensor_x = 0.15
         fixed_sensor_y = 0.84
     
-    robot_sensor_pub = rospy.Publisher('/eva/gas_level', String, queue_size=10)
-    fixed_sensor_pub = rospy.Publisher('/eva/fixed_gas_level', String, queue_size=10)
+    robot_sensor_pub = rospy.Publisher('/eva/gas_level', Float32, queue_size=10)
+    fixed_sensor_pub = rospy.Publisher('/eva/fixed_gas_level', Float32, queue_size=10)
     
     gas_cloud_center = (gas_cloud_x, gas_cloud_y)
     fixed_sensor_center = (fixed_sensor_x, fixed_sensor_y)
@@ -55,11 +55,13 @@ def talker():
             fixed_dist = math.sqrt((gas_cloud_center[0] - fixed_sensor_center[0])**2 + (gas_cloud_center[1] - fixed_sensor_center[1])**2)
 
             robot_level = 0.0
-            robot_noise = random.gauss(0, 0.5) # Mean and Std.
+            # Adding noise with a given mean and std.
+            robot_noise = random.gauss(0, 0.5)
 
             fixed_level = 0.0
             fixed_noise = random.gauss(0, 0.5)
 
+            # Should be zero if outside 2 m.
             if robot_dist < 2.0:
                 robot_level = 100*(1 - robot_dist/2)
 
@@ -76,11 +78,9 @@ def talker():
             if fixed_level < 0.0:
                 fixed_level = 0.0
 
-            robot_gas_str = "%.1f" % robot_level
-            robot_sensor_pub.publish(robot_gas_str)
-
-            fixed_gas_str = "%.1f" % fixed_level
-            fixed_sensor_pub.publish(fixed_gas_str)
+            # Rounding the final result and publishing.
+            robot_sensor_pub.publish(np.around(robot_level, decimals=1))
+            fixed_sensor_pub.publish(np.around(fixed_level, decimals=1))
 
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue

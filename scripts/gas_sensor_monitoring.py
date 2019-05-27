@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import Float32
 from move_base_msgs.msg import MoveBaseActionGoal
 
 start_move = False
@@ -26,7 +26,7 @@ def send_navigation_command(pub):
 
 def callback(data):
     global start_move
-    gas_level = float(data.data)
+    gas_level = data.data
 
     if gas_level > 17.7:
         start_move = True
@@ -42,7 +42,7 @@ def listener():
     # Waiting a little (just for visualization).
     rospy.sleep(7)
 
-    rospy.Subscriber('/eva/fixed_gas_level', String, callback)
+    rospy.Subscriber('/eva/fixed_gas_level', Float32, callback)
 
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():

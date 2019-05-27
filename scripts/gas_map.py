@@ -12,13 +12,13 @@ import tf
 import math
 import cv2 as cv
 
-from std_msgs.msg import String
+from std_msgs.msg import Float32
 
 gas_level = 0.0
 
 def callback(data):
     global gas_level
-    gas_level = float(data.data)
+    gas_level = data.data
     print(gas_level)
 
 # Increasing the size of the map and visualizing.
@@ -67,7 +67,7 @@ def map():
 def listener():
     rospy.init_node('gas_map', anonymous=True)
 
-    rospy.Subscriber('/eva/gas_level', String, callback)
+    rospy.Subscriber('/eva/gas_level', Float32, callback)
 
     map()
 

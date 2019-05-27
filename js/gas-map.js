@@ -19,7 +19,7 @@ var heat = L.heatLayer([], {
 var latLngArray = Array(100).fill().map(() => Array(100).fill(0));
 
 gasListener.subscribe(function(message) {
-    gasValue = parseFloat(message.data);
+    gasValue = message.data.toFixed(1);
 
     // Bottom left of array is defined to be at lat=-4 and lng=-3. The array has a resolution of 10 per lat/lng unit.
     var newLat10 = Math.floor(robotMarker.getLatLng().lat*10) + 40;

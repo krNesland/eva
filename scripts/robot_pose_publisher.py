@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-# Publishing a the pose of the robot such that Gazebo can position the robot correctly.
+# Publishing the pose of the robot such that Gazebo can position the robot correctly.
 
-# Subscribe: /tf, 
+# Subscribe: /tf
 # Publish: /gazebo/set_link_state
 
 import rospy
@@ -16,10 +16,13 @@ def talker():
 
     robot_pose_pub = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=10)
     robot_pose_msg = LinkState()
+    # The name of the link, as in the model-1_4.sdf file.
     robot_pose_msg.link_name = 'taurob'
+    # The robot is placed relative to the "map" frame.
     robot_pose_msg.reference_frame = 'map'
 
     listener = tf.TransformListener()
+    # Updating the pose five times a second.
     rate = rospy.Rate(5)
 
     while not rospy.is_shutdown():
