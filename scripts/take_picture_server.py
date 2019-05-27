@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-# Takes a picture of an obstacle given its position.
+# Navigates to a position where it can take a picture of the obstacle and saves the picture so that the browser can display it.
 
-# Subscribe: 
+# Subscribe: /map, /turtlebot3_camera, /tf
+# Service name: /eva/take_picture
 
 import roslib
 import rospy
@@ -20,14 +21,11 @@ from eva_a.srv import *
 from move_base_msgs.msg import *
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-from geometry_msgs.msg import Twist
-
 
 map_data = np.zeros((384, 384), dtype=np.int8)
 
 def map_callback(data):
     global map_data
-
     map_data = np.flipud(np.reshape(data.data, (data.info.height, data.info.width)).astype(np.int8))
 
 
@@ -38,7 +36,7 @@ def map_to_img(x, y):
 
     return (u, v)
 
-
+# Controlling if there is room for the robot at a given position.
 def free_space(x, y, region_size):
     global map_data
     u, v = map_to_img(x, y)
@@ -66,11 +64,14 @@ def free_space(x, y, region_size):
     else:
         return True
 
-
+# Finding a suitable pose to take a picture of the obstacle from.
 def find_capturing_pose(x_obstacle, y_obstacle):
     global map_data
 
+    # The step between every angle that is sampled.
     step = (2*math.pi)/10
+
+    # A list that will store valid poses to take a picture from.
     possible_poses = []
 
     for i in range(10):
@@ -101,7 +102,7 @@ def find_capturing_pose(x_obstacle, y_obstacle):
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
 
-    # Just some high value.
+    # This will store the distance to the closest capturing position found so far.
     shortest_dist = 1000
 
     # Finding the closest capturing position from where the robot is currently at.
@@ -112,14 +113,14 @@ def find_capturing_pose(x_obstacle, y_obstacle):
             selected_pose = pose
             shortest_dist = dist
 
+    # If a valid pose was found.
     if len(possible_poses) > 0:
         return selected_pose
     else:
         return []
 
-
+# Ordering move_base to move the robot to the wanted position.
 def navigate_to_pose(pose):
-
     mb_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     mb_client.wait_for_server()
 
@@ -140,9 +141,11 @@ def handle_take_picture(req):
     x_obstacle = req.obstaclePosX
     y_obstacle = req.obstaclePosY
 
+    # Finding a position to take a picture from that does not cause collision with walls or similar.
     pose = find_capturing_pose(x_obstacle, y_obstacle)
     print(pose)
 
+    # If a valid pose was found.
     if len(pose) > 0:
         navigate_to_pose(pose)
 
@@ -153,6 +156,7 @@ def handle_take_picture(req):
         data = rospy.wait_for_message("/turtlebot3_camera", Image)
         print("Image gotten.")
 
+        # Converting the image message to a OpenCV image and storing.
         bridge = CvBridge()
         rospack = rospkg.RosPack()
         rospy.sleep(0.2)
