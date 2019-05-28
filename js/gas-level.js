@@ -1,3 +1,5 @@
+// Same as fixed-gas-level, but for the sensor "attached" to the robot.
+
 var gasDial = document.getElementById('gas-dial');
 gasDial.innerHTML = '49';
 

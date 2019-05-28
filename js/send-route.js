@@ -1,9 +1,13 @@
+// Requesting the robot to follow a specified route.
+
+// Specifying the action server.
 var followRouteClient = new ROSLIB.ActionClient({
     ros : ros,
     serverName : '/follow_route_server',
     actionName : '/eva_a/FollowRouteAction'
 });
 
+// Specifying the goal.
 var goal = new ROSLIB.Goal({
     actionClient : followRouteClient,
     goalMessage : {
@@ -13,18 +17,17 @@ var goal = new ROSLIB.Goal({
     }
 });
 
-//header.seq header.stamp header.frame_id goal_id.stamp goal_id.id goal.latVec goal.lngVec goal.firstWaypoint
-
-console.log("Message is ready.");
-
+// What to do on feedback from the action server.
 goal.on('feedback', function(feedback) {
     console.log('Feedback: ' + feedback.headingFor);
 });
 
+// What to do when the action server is finished.
 goal.on('result', function(result) {
     console.log('Final Result: ' + result.success);
 });
 
+// Sending the goal to the action server.
 function callFollowRoute() {
     console.log("Trying to call FollowRoute.");
     goal.send();

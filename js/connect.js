@@ -1,5 +1,5 @@
-// Connecting to ROS
-// -----------------
+// Connecting to ROS and controlling the connection indicator.
+
 var ros = new ROSLIB.Ros();
 
 // If there is an error on the backend, an 'error' emit will be emitted.
@@ -19,4 +19,3 @@ ros.on('close', function() {
 
 // Create a connection to the rosbridge WebSocket server.
 ros.connect('ws://localhost:9090')
-
