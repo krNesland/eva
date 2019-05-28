@@ -1,4 +1,4 @@
-# This message contains arrays describing the enclosing circles of the obstacles detected
+# This message contains arrays describing the positions of the found obstacles.
 
 uint32 numObstacles
 

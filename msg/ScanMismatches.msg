@@ -1,6 +1,4 @@
-# This message contains ones at positions where the scan is considerably shorter than expected.
-# (0, 0) is at top-left corner of image
-#
+# This message is the result of subtracting the original map from the new mapping.
 
 Header header        # Header timestamp should be acquisition time of image
                      # Header frame_id should be optical frame of camera

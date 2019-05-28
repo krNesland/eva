@@ -1,4 +1,5 @@
-# This service receives the position of an obstacle and should drive around it in a circle.
+# Requests the robot to drive around an obstacle at a given radius.
+# Returns the vertices of the obstacle.
 
 float64 obstaclePosX
 float64 obstaclePosY

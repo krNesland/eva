@@ -1,4 +1,4 @@
-# This service receives the position of an obstacle and should take a picture of the obstacle.
+# This service request is the position of an obstacle that should be taken a picture of.
 
 float64 obstaclePosX
 float64 obstaclePosY
