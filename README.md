@@ -46,7 +46,19 @@ roslauch eva_a mode4_sim.launch
 can be called for the Gazebo simulation.
 
 ## Folder Description
+**action, msg and srv** include the definition of the actionlib actions, the messages and the services.
 
+**css, js and pages** include the files necessary css-, javascript- and html files for the web browser interface.
+
+**img** includes image files used in the web browser interface and to store the images of Mode 4.
+
+**map** includes the occupancy grid map used for navigation and Leaflet files.
+
+**models** includes the CAD model of the room and the robot. The robot is only included when not running a simulation. This is because the simulation includes the model from a TurtleBot3 package.
+
+**scripts** include the Python files that run in the nodes.
+
+**worlds** includes the setup of the Gazebo world and controls the import of models.
 
 ## Implemented Nodes
 - drive_around_server
