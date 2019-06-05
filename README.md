@@ -3,7 +3,7 @@ Mobile robot for inspection on an unmanned offshore production platform. A proof
 
 To get started with the TurtleBot, one should go through the steps in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview).
 
-![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Mode 4")
+![alt text](https://raw.githubusercontent.com/krNesland/eva/master/img/mode4.gif "Mode 4")
 
 ## System Requirements
 - Ubuntu 16.04 LTS
