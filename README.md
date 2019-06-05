@@ -8,7 +8,7 @@ To get started with the TurtleBot, one should go through the steps in the [manua
 - Python 2.7
 - ROS Kinetic
 
-Install the ROS version specified in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started). After this, clone this repository into "~/catkin_ws/src/eva_a" and build with 
+Install the ROS version specified in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started). After this, clone this repository into "~/catkin_ws/src/eva_a" and build with 
 ```
 catkin_make
 ```
@@ -25,10 +25,22 @@ commands while in the "~/catkin_ws" folder.
 - image_transport
 - rosbridge_server
 
-Packages are installed with "sudo apt-get install ros-kinetic-web-video-server" (and similar). Some of the packages listed might be already installed.
+Packages are installed with 
+```
+sudo apt-get install ros-kinetic-web-video-server
+```
+(and similar). Some of the packages listed might be already installed.
 
 ## How To Run a Mode
-Mode 4 as an example. "roslaunch eva_a mode4.launch" and open the corresponding web page in the "pages" folder. Note that this mode requires you to be connected to the physical TurtleBot. "roslauch eva_a mode4_sim.launch" can be called for the Gazebo simulation.
+Mode 4 as an example. 
+```
+roslaunch eva_a mode4.launch
+```
+and open the corresponding web page in the "pages" folder. Note that this mode requires you to be connected to the physical TurtleBot. 
+```
+roslauch eva_a mode4_sim.launch
+```
+can be called for the Gazebo simulation.
 
 ## Folder Description
 
