@@ -3,14 +3,14 @@ Mobile robot for inspection on an unmanned offshore production platform. A proof
 
 To get started with the TurtleBot, one should go through the steps in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview).
 
-## System requirements
+## System Requirements
 - Ubuntu 16.04 LTS
 - Python 2.7
 - ROS Kinetic
 
-Install the ROS version specified in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started).
+Install the ROS version specified in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started). After this, clone this repository into "~catkin_ws/src/".
 
-## Required ROS packages
+## Required ROS Packages
 - cv_bridge
 - opencv3
 - tf2_web_republisher
