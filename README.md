@@ -6,7 +6,9 @@ To get started with the TurtleBot, one should go through the steps in the manual
 ## System requirements
 - Ubuntu 16.04 LTS
 - Python 2.7
-- ROS Kinetic (http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started)
+- ROS Kinetic
+
+Install the ROS version specified in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started).
 
 ## Required ROS packages
 - cv_bridge
@@ -14,15 +16,28 @@ To get started with the TurtleBot, one should go through the steps in the manual
 - tf2_web_republisher
 - web_video_server
 - image_transport
+- rosbridge_server
 
-## Packages used
-- Navigation
-- Roslibjs
+Packages are installed with "sudo apt-get install ros-kinetic-web-video-server" (and similar). Some of the packages listed might be already installed.
 
-
-## Nodes
-- gas-map
+## Implemented Nodes
+- drive_around_server
+- follow_route_server
+- gas_level_publisher
+- gas_sensor_monitoring
+- obstacle_publisher
+- robot_pose_publisher
+- scan_mismatches
+- take_picture_server
+- thermal_center
 
 ## Messages
+- Obstacles
+- ScanMismatches
 
 ## Services
+- DriveAround
+- TakePicture
+
+## Actions
+- FollowRoute
