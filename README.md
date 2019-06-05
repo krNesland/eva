@@ -1,6 +1,5 @@
 # Eva
-(Early phase)
-An autonomous robot for use on an unmanned O&G production platform. Built on ROS and provides a web browser interface.
+Mobile Robot for Inspection on an Unmanned Offshore Production Platform. A proof of concept, developed with the ROS software and provides a web browser interface.
 
 ## Packages used
 - Navigation
