@@ -1,7 +1,7 @@
 # Eva
 Mobile robot for inspection on an unmanned offshore production platform. A proof of concept, developed with the ROS software and provides a web browser interface.
 
-To get started with the TurtleBot, one should go through the steps in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview).
+To get started with the TurtleBot, one should go through the steps in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview).
 
 ## System Requirements
 - Ubuntu 16.04 LTS
