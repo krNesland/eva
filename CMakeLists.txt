@@ -63,8 +63,6 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  GasGradient.srv
-  ReportCylindricalObstacle.srv
   TakePicture.srv
   DriveAround.srv
 )
