@@ -3,6 +3,8 @@ Mobile robot for inspection on an unmanned offshore production platform. A proof
 
 To get started with the TurtleBot, one should go through the steps in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview).
 
+![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Mode 4")
+
 ## System Requirements
 - Ubuntu 16.04 LTS
 - Python 2.7
@@ -12,10 +14,11 @@ Install the ROS version specified in the [manual](http://emanual.robotis.com/doc
 ```
 catkin_make
 ```
+and then
 ```
 catkin_make install
 ```
-commands while in the "~/catkin_ws" folder.
+while in the "~/catkin_ws" folder.
 
 ## Required ROS Packages
 - cv_bridge
