@@ -20,6 +20,9 @@ Install the ROS version specified in the manual (http://emanual.robotis.com/docs
 
 Packages are installed with "sudo apt-get install ros-kinetic-web-video-server" (and similar). Some of the packages listed might be already installed.
 
+## Folder Description
+
+
 ## Implemented Nodes
 - drive_around_server
 - follow_route_server
