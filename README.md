@@ -8,7 +8,7 @@ To get started with the TurtleBot, one should go through the steps in the manual
 - Python 2.7
 - ROS Kinetic
 
-Install the ROS version specified in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started). After this, clone this repository into "~catkin_ws/src/".
+Install the ROS version specified in the manual (http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started). After this, clone this repository into "~catkin_ws/src/" and compile with "catkin_make" and "catkin_make install" commands while in the "catkin_ws" folder.
 
 ## Required ROS Packages
 - cv_bridge
