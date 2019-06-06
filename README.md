@@ -1,8 +1,6 @@
 # Eva
 Mobile robot for inspection on an unmanned offshore production platform. A proof of concept, developed with the ROS software and provides a web browser interface.
 
-To get started with the TurtleBot, one should go through the steps in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview).
-
 ![alt text](https://raw.githubusercontent.com/krNesland/eva/master/img/mode4.gif "Mode 4")
 
 ## System Requirements
@@ -33,6 +31,9 @@ Packages are installed with
 sudo apt-get install ros-kinetic-web-video-server
 ```
 (and similar). Some of the packages listed might be already installed.
+
+## Getting Started
+To get started with the TurtleBot, one should go through the steps in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview). If not familiar with ROS, one should also go through the [beginner level turtorials](http://wiki.ros.org/ROS/Tutorials).
 
 ## How To Run a Mode
 Mode 4 as an example. 
