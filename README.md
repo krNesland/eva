@@ -8,7 +8,7 @@ Mobile robot for inspection on an unmanned offshore production platform. A proof
 - Python 2.7
 - ROS Kinetic
 
-Install the ROS version specified in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/getting_started/#getting-started). After this, clone this repository into "~/catkin_ws/src/eva_a" and build with 
+Follow the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/pc_setup/#pc-setup) to install the correct version of Linux and ROS. Then, follow the [tutorial](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment) to set up a workspace. After this, clone this repository into the "src" folder of your workspace, cd into the workspace and build with 
 ```
 catkin_make
 ```
@@ -16,7 +16,7 @@ and then
 ```
 catkin_make install
 ```
-while in the "~/catkin_ws" folder.
+
 
 ## Required ROS Packages
 - cv_bridge
