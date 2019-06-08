@@ -33,7 +33,7 @@ sudo apt-get install ros-kinetic-web-video-server
 (and similar). Some of the packages listed might be already installed.
 
 ## Getting Started
-To get started with the TurtleBot, one should go through the steps in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview). If not familiar with ROS, one should also go through the [beginner level tutorials](http://wiki.ros.org/ROS/Tutorials).
+To get started with the TurtleBot, one should go through the steps in the [manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/#overview). If not familiar with ROS, one should go through the [beginner level tutorials](http://wiki.ros.org/ROS/Tutorials) first.
 
 ## How To Run a Mode
 Mode 4 as an example. 
