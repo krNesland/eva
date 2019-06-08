@@ -42,7 +42,7 @@ roslaunch eva_a mode4.launch
 ```
 and open the corresponding web page in the "pages" folder. Note that this mode requires you to have brought up the physical TurtleBot. 
 ```
-roslauch eva_a mode4_sim.launch
+roslaunch eva_a mode4_sim.launch
 ```
 can be called for the Gazebo simulation.
 
