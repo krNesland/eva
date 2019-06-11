@@ -1,5 +1,0 @@
-img - images
-css - css files
-js - javascript files
-map - leaflet map files and map files for ros map server
-launch - launch files for the package
